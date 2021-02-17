@@ -21,8 +21,8 @@ load("//:private/coursier_utilities.bzl", "escape", "get_classifier", "get_packa
 
 JETIFY_INCLUDE_LIST_JETIFY_ALL = ["*"]
 
-def _genrule_copy_artifact_from_http_file(artifact):
-    http_file_repository = escape(artifact["coord"])
+def _genrule_copy_artifact_from_http_file(artifact, escape_overrides):
+    http_file_repository = escape(artifact["coord"], escape_overrides)
     return "\n".join([
         "genrule(",
         "     name = \"%s_extension\"," % http_file_repository,
@@ -46,14 +46,14 @@ def _deduplicate_list(items):
 # tree.
 #
 # Made function public for testing.
-def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_artifacts, testonly_artifacts, override_targets):
+def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_artifacts, testonly_artifacts, override_targets, escape_overrides = {}):
     # The list of java_import/aar_import declaration strings to be joined at the end
     all_imports = []
 
-    # A dictionary (set) of coordinates. This is to ensure we don't generate
+    # A dictionary of labels to coordinates. This is to ensure we don't generate
     # duplicate labels
     #
-    # seen_imports :: string -> bool
+    # seen_imports :: string -> string
     seen_imports = {}
 
     # A list of versionless target labels for jar artifacts. This is used for
@@ -63,7 +63,7 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
 
     labels_to_override = {}
     for coord in override_targets:
-        labels_to_override.update({escape(coord): override_targets.get(coord)})
+        labels_to_override.update({escape(coord, escape_overrides): override_targets.get(coord)})
 
     # First collect a map of target_label to their srcjar relative paths, and symlink the srcjars if needed.
     # We will use this map later while generating target declaration strings with the "srcjar" attr.
@@ -75,10 +75,10 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
                 artifact_path = artifact["file"]
                 if artifact_path != None and artifact_path not in seen_imports:
                     seen_imports[artifact_path] = True
-                    target_label = escape(strip_packaging_and_classifier_and_version(artifact["coord"]))
+                    target_label = escape(strip_packaging_and_classifier_and_version(artifact["coord"]), escape_overrides)
                     srcjar_paths[target_label] = artifact_path
                     if repository_ctx.attr.maven_install_json:
-                        all_imports.append(_genrule_copy_artifact_from_http_file(artifact))
+                        all_imports.append(_genrule_copy_artifact_from_http_file(artifact, escape_overrides))
 
     jetify_all = repository_ctx.attr.jetify and repository_ctx.attr.jetify_include_list == JETIFY_INCLUDE_LIST_JETIFY_ALL
 
@@ -91,12 +91,11 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
     for artifact in dep_tree["dependencies"]:
         artifact_path = artifact["file"]
         simple_coord = strip_packaging_and_classifier_and_version(artifact["coord"])
-        target_label = escape(simple_coord)
+        target_label = escape(simple_coord, escape_overrides)
         alias_visibility = ""
-
         if target_label in seen_imports:
-            # Skip if we've seen this target label before. Every versioned artifact is uniquely mapped to a target label.
-            pass
+            if simple_coord != seen_imports[target_label]:
+                fail("Multiple coords were mapped to the same label. {} and {} both escape to {}.".format(simple_coord, seen_imports[target_label], target_label))
         elif repository_ctx.attr.fetch_sources and get_classifier(artifact["coord"]) == "sources":
             # We already processed the sources above, so skip them here.
             pass
@@ -105,24 +104,24 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
             all_imports.append(
                 "filegroup(\n\tname = \"%s\",\n\tsrcs = [\"%s\"],\n\ttags = [\"javadoc\"],\n)" % (target_label, artifact_path))
         elif get_packaging(artifact["coord"]) == "json":
-            seen_imports[target_label] = True
-            versioned_target_alias_label = "%s_extension" % escape(artifact["coord"])
+            seen_imports[target_label] = simple_coord
+            versioned_target_alias_label = "%s_extension" % escape(artifact["coord"], escape_overrides)
             all_imports.append(
                 "alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, versioned_target_alias_label))
             if repository_ctx.attr.maven_install_json:
-              all_imports.append(_genrule_copy_artifact_from_http_file(artifact))
+              all_imports.append(_genrule_copy_artifact_from_http_file(artifact, escape_overrides))
         elif target_label in labels_to_override:
             # Override target labels with the user provided mapping, instead of generating
             # a jvm_import/aar_import based on information in dep_tree.
-            seen_imports[target_label] = True
+            seen_imports[target_label] = simple_coord
             all_imports.append(
                 "alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n\tvisibility = [\"//visibility:public\"],)" % (target_label, labels_to_override.get(target_label)),
             )
             if repository_ctx.attr.maven_install_json:
                 # Provide the downloaded artifact as a file target.
-                all_imports.append(_genrule_copy_artifact_from_http_file(artifact))
+                all_imports.append(_genrule_copy_artifact_from_http_file(artifact, escape_overrides))
         elif artifact_path != None:
-            seen_imports[target_label] = True
+            seen_imports[target_label] = simple_coord
 
             # 1. Generate the rule class.
             #
@@ -185,7 +184,7 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
                 if get_packaging(dep) == "json":
                     continue
                 stripped_dep = strip_packaging_and_classifier_and_version(dep)
-                dep_target_label = escape(strip_packaging_and_classifier_and_version(dep))
+                dep_target_label = escape(strip_packaging_and_classifier_and_version(dep), escape_overrides)
 
                 # Coursier returns cyclic dependencies sometimes. Handle it here.
                 # See https://github.com/bazelbuild/rules_jvm_external/issues/172
@@ -284,7 +283,7 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
             #   name = "org_hamcrest_hamcrest_library_1_3",
             #   actual = "org_hamcrest_hamcrest_library",
             # )
-            versioned_target_alias_label = escape(strip_packaging_and_classifier(artifact["coord"]))
+            versioned_target_alias_label = escape(strip_packaging_and_classifier(artifact["coord"]), escape_overrides)
             all_imports.append("alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n%s)" %
                                (versioned_target_alias_label, target_label, alias_visibility))
 
@@ -298,7 +297,7 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
             #     cmd = "cp $< $@",
             # )
             if repository_ctx.attr.maven_install_json:
-                all_imports.append(_genrule_copy_artifact_from_http_file(artifact))
+                all_imports.append(_genrule_copy_artifact_from_http_file(artifact, escape_overrides))
 
         else:  # artifact_path == None:
             # Special case for certain artifacts that only come with a POM file.
@@ -318,14 +317,14 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
             # encounter an artifact without a filepath, we assume that it's a
             # parent artifact that just exports its dependencies, instead of
             # failing.
-            seen_imports[target_label] = True
+            seen_imports[target_label] = simple_coord
             target_import_string = ["java_library("]
             target_import_string.append("\tname = \"%s\"," % target_label)
             target_import_string.append("\texports = [")
 
             target_import_labels = []
             for dep in artifact["dependencies"]:
-                dep_target_label = escape(strip_packaging_and_classifier_and_version(dep))
+                dep_target_label = escape(strip_packaging_and_classifier_and_version(dep), escape_overrides)
 
                 # Coursier returns cyclic dependencies sometimes. Handle it here.
                 # See https://github.com/bazelbuild/rules_jvm_external/issues/172
@@ -344,7 +343,7 @@ def _generate_imports(repository_ctx, dep_tree, explicit_artifacts, neverlink_ar
 
             all_imports.append("\n".join(target_import_string))
 
-            versioned_target_alias_label = escape(strip_packaging_and_classifier(artifact["coord"]))
+            versioned_target_alias_label = escape(strip_packaging_and_classifier(artifact["coord"]), escape_overrides)
             all_imports.append("alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n%s)" %
                                (versioned_target_alias_label, target_label, alias_visibility))
 
