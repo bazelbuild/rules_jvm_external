@@ -23,6 +23,7 @@ def rules_jvm_external_deps(repositories = _DEFAULT_REPOSITORIES):
     maven_install(
         name = "rules_jvm_external_deps",
         artifacts = [
+            "com.google.guava:guava:31.1-jre",
             "com.google.auth:google-auth-library-credentials:0.22.0",
             "com.google.auth:google-auth-library-oauth2-http:0.22.0",
             "com.google.cloud:google-cloud-core:1.93.10",

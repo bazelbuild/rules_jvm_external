@@ -19,7 +19,7 @@ load("//private/rules:java_export.bzl", _java_export = "java_export")
 load("//private/rules:javadoc.bzl", _javadoc = "javadoc")
 load("//private/rules:maven_bom.bzl", _maven_bom = "maven_bom")
 load("//private/rules:maven_install.bzl", _maven_install = "maven_install")
-load("//private/rules:maven_publish.bzl", _MavenPublishInfo = "MavenPublishInfo")
+load("//private/rules:maven_publish.bzl", _MavenPublishInfo = "MavenPublishInfo", _maven_publish="maven_publish")
 load("//private/rules:pom_file.bzl", _pom_file = "pom_file")
 
 DEFAULT_REPOSITORY_NAME = _DEFAULT_REPOSITORY_NAME
@@ -33,3 +33,4 @@ maven_install = _maven_install
 pom_file = _pom_file
 read_coordinates = _read_coordinates
 MavenPublishInfo = _MavenPublishInfo
+maven_publish = _maven_publish

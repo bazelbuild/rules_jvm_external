@@ -54,6 +54,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
+
+import com.google.common.base.Splitter;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -85,17 +87,20 @@ public class MavenPublisher {
     Coordinates coords = new Coordinates(parts.get(0), parts.get(1), parts.get(2));
 
     // Calculate md5 and sha1 for each of the inputs
-    Path pom = Paths.get(args[5]);
+    Path pom = getPathIfSet(args[5]);
     Path binJar = getPathIfSet(args[6]);
     Path srcJar = getPathIfSet(args[7]);
     Path docJar = getPathIfSet(args[8]);
 
     try {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
-      futures.add(upload(repo, credentials, coords, ".pom", pom, gpgSign));
+      if(pom != null) {
+        futures.add(upload(repo, credentials, coords, ".pom", pom, gpgSign));
+      }
 
       if (binJar != null) {
-        futures.add(upload(repo, credentials, coords, ".jar", binJar, gpgSign));
+        String ext = com.google.common.io.Files.getFileExtension(binJar.getFileName().toString());
+        futures.add(upload(repo, credentials, coords, "." + ext, binJar, gpgSign));
       }
 
       if (srcJar != null) {
@@ -104,6 +109,17 @@ public class MavenPublisher {
 
       if (docJar != null) {
         futures.add(upload(repo, credentials, coords, "-javadoc.jar", docJar, gpgSign));
+      }
+
+      if(args.length > 9) {
+        String ext = com.google.common.io.Files.getFileExtension(args[9]);
+        List<String> extraArtifactTuples = Splitter.onPattern(",").splitToList(args[9]);
+        for(String artifactTuple: extraArtifactTuples) {
+          String[] splits = artifactTuple.split("=");
+          String classifier = splits[0];
+          Path artifact = getPathIfSet(splits[1]);
+          futures.add(upload(repo, credentials, coords, String.format("-%s.%s", classifier,ext), artifact, gpgSign));
+        }
       }
 
       CompletableFuture<Void> all =

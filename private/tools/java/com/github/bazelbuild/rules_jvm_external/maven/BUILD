@@ -8,6 +8,10 @@ java_binary(
     deps = [
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external",
         artifact(
+            "com.google.guava:guava",
+            repository_name = "rules_jvm_external_deps",
+        ),
+        artifact(
             "com.google.auth:google-auth-library-oauth2-http",
             repository_name = "rules_jvm_external_deps",
         ),
