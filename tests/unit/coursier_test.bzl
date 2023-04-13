@@ -2,7 +2,6 @@ load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load(
     "//:coursier.bzl",
     "compute_dependency_inputs_signature",
-    "get_coursier_cache_or_default",
     "get_netrc_lines_from_entries",
     infer = "infer_artifact_path_from_primary_and_repos",
 )
@@ -365,86 +364,6 @@ def _mock_repo_path(path):
 def _mock_which(path):
     return False
 
-def _get_coursier_cache_or_default_disabled_test(ctx):
-    env = unittest.begin(ctx)
-    mock_repository_ctx = struct(
-        os = struct(
-            environ = {
-                "COURSIER_CACHE": _mock_repo_path("/does/not/matter"),
-            },
-            name = "linux",
-        ),
-        which = _mock_which,
-    )
-    asserts.equals(
-        env,
-        "v1",
-        get_coursier_cache_or_default(mock_repository_ctx, False),
-    )
-    return unittest.end(env)
-
-get_coursier_cache_or_default_disabled_test = add_test(_get_coursier_cache_or_default_disabled_test)
-
-def _get_coursier_cache_or_default_enabled_with_default_location_linux_test(ctx):
-    env = unittest.begin(ctx)
-    mock_repository_ctx = struct(
-        os = struct(
-            environ = {
-                "HOME": "/home/testuser",
-            },
-            name = "linux",
-        ),
-        which = _mock_which,
-    )
-    asserts.equals(
-        env,
-        "/home/testuser/.cache/coursier/v1",
-        get_coursier_cache_or_default(mock_repository_ctx, True),
-    )
-    return unittest.end(env)
-
-get_coursier_cache_or_default_enabled_with_default_location_linux_test = add_test(_get_coursier_cache_or_default_enabled_with_default_location_linux_test)
-
-def _get_coursier_cache_or_default_enabled_with_default_location_mac_test(ctx):
-    env = unittest.begin(ctx)
-    mock_repository_ctx = struct(
-        os = struct(
-            environ = {
-                "HOME": "/Users/testuser",
-            },
-            name = "mac",
-        ),
-        which = _mock_which,
-    )
-    asserts.equals(
-        env,
-        "/Users/testuser/Library/Caches/Coursier/v1",
-        get_coursier_cache_or_default(mock_repository_ctx, True),
-    )
-    return unittest.end(env)
-
-get_coursier_cache_or_default_enabled_with_default_location_mac_test = add_test(_get_coursier_cache_or_default_enabled_with_default_location_mac_test)
-
-def _get_coursier_cache_or_default_enabled_with_custom_location_test(ctx):
-    env = unittest.begin(ctx)
-    mock_repository_ctx = struct(
-        os = struct(
-            environ = {
-                "COURSIER_CACHE": _mock_repo_path("/custom/location"),
-            },
-            name = "linux",
-        ),
-        which = _mock_which,
-    )
-    asserts.equals(
-        env,
-        "/custom/location",
-        get_coursier_cache_or_default(mock_repository_ctx, True),
-    )
-    return unittest.end(env)
-
-get_coursier_cache_or_default_enabled_with_custom_location_test = add_test(_get_coursier_cache_or_default_enabled_with_custom_location_test)
-
 def _mock_which_true(path):
     return True
 
@@ -453,27 +372,6 @@ def _mock_execute(args):
         return struct(return_code = 1)
     else:
         return struct(return_code = 0)
-
-def _get_coursier_cache_or_default_enabled_with_home_dot_coursier_directory_test(ctx):
-    env = unittest.begin(ctx)
-    mock_repository_ctx = struct(
-        os = struct(
-            environ = {
-                "HOME": "/Users/testuser",
-            },
-            name = "mac",
-        ),
-        which = _mock_which_true,
-        execute = _mock_execute,
-    )
-    asserts.equals(
-        env,
-        "/Users/testuser/.coursier/cache/v1",
-        get_coursier_cache_or_default(mock_repository_ctx, True),
-    )
-    return unittest.end(env)
-
-get_coursier_cache_or_default_enabled_with_home_dot_coursier_directory_test = add_test(_get_coursier_cache_or_default_enabled_with_home_dot_coursier_directory_test)
 
 def _calculate_inputs_hash_does_not_care_about_input_order_test(ctx):
     env = unittest.begin(ctx)

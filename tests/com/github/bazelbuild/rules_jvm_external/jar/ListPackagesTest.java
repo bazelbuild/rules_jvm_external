@@ -6,6 +6,7 @@ import com.google.devtools.build.runfiles.Runfiles;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.junit.Test;
@@ -61,15 +62,13 @@ public class ListPackagesTest {
   private void doTest(String runfileJar, String... expectedPackages) throws IOException {
     SortedSet<String> expected = sortedSet(expectedPackages);
     Path jar = Paths.get(Runfiles.create().rlocation(runfileJar));
-    SortedSet<String> packages = ListPackages.process(jar);
+    SortedSet<String> packages = new ListPackages().getPackages(jar);
     assertEquals(expected, packages);
   }
 
   private SortedSet<String> sortedSet(String... contents) {
     SortedSet<String> set = new TreeSet<>();
-    for (String string : contents) {
-      set.add(string);
-    }
+    Collections.addAll(set, contents);
     return set;
   }
 }

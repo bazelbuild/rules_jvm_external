@@ -3,19 +3,6 @@ workspace(name = "rules_jvm_external")
 android_sdk_repository(name = "androidsdk")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
-load(
-    "//private:versions.bzl",
-    "COURSIER_CLI_GITHUB_ASSET_URL",
-    "COURSIER_CLI_HTTP_FILE_NAME",
-    "COURSIER_CLI_SHA256",
-)
-
-http_file(
-    name = COURSIER_CLI_HTTP_FILE_NAME,
-    sha256 = COURSIER_CLI_SHA256,
-    urls = [COURSIER_CLI_GITHUB_ASSET_URL],
-)
-
 load("//:repositories.bzl", "rules_jvm_external_deps")
 
 rules_jvm_external_deps()
@@ -586,6 +573,7 @@ maven_install(
 )
 
 load("@m2local_testing_repin//:defs.bzl", "pinned_maven_install")
+
 pinned_maven_install()
 
 maven_install(
@@ -599,6 +587,20 @@ maven_install(
     fail_on_missing_checksum = False,
     repositories = [
         "m2Local",
+        "https://repo1.maven.org/maven2",
+    ],
+)
+
+maven_install(
+    name = "bom_testing",
+    artifacts = [
+        # The version of this will be set by the BOM
+        "io.netty:netty-codec",
+    ],
+    #    boms = [
+    #        "io.netty:netty-bom:4.1.89.Final",
+    #    ],
+    repositories = [
         "https://repo1.maven.org/maven2",
     ],
 )

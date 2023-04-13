@@ -4,15 +4,17 @@ module(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.4.1")
-bazel_dep(name = "stardoc", version = "0.5.3", repo_name = "io_bazel_stardoc")
+bazel_dep(name = "stardoc", repo_name = "io_bazel_stardoc", version = "0.5.3")
 
 non_module_deps = use_extension("//:non-module-deps.bzl", "non_module_deps")
+
 use_repo(
     non_module_deps,
     "io_bazel_rules_kotlin",
 )
 
 maven = use_extension(":extensions.bzl", "maven")
+
 maven.install(
     name = "rules_jvm_external_deps",
     artifacts = [
@@ -28,6 +30,7 @@ maven.install(
     ],
     lock_file = "@rules_jvm_external//:rules_jvm_external_deps_install.json",
 )
+
 use_repo(
     maven,
     "rules_jvm_external_deps",

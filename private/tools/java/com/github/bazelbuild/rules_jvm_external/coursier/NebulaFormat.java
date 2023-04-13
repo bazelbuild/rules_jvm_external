@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -16,8 +17,9 @@ import java.util.stream.Collectors;
 public class NebulaFormat {
   private final Set<String> repositories;
 
-  public NebulaFormat(Set<String> repositories) {
-    this.repositories = repositories;
+  public NebulaFormat(Collection<String> repositories) {
+    // Ordering matters for the repositories
+    this.repositories = new LinkedHashSet<>(repositories);
   }
 
   public Map<String, Object> render(Set<DependencyInfo> infos, Map<String, Object> conflicts) {
@@ -71,7 +73,9 @@ public class NebulaFormat {
               .map(Objects::toString)
               .forEach(
                   repo -> {
-                    repos.getOrDefault(stripAuthenticationInformation(repo), new TreeSet<>()).add(key);
+                    repos
+                        .getOrDefault(stripAuthenticationInformation(repo), new TreeSet<>())
+                        .add(key);
                   });
 
           deps.put(

@@ -96,12 +96,12 @@ def maven_export(
         name,
         maven_coordinates,
         lib_name,
-        deploy_env=[],
-        pom_template=None,
-        visibility=None,
-        tags=[],
-        testonly=False,
-        javadocopts=[]):
+        deploy_env = [],
+        pom_template = None,
+        visibility = None,
+        tags = [],
+        testonly = False,
+        javadocopts = []):
     """
     All arguments are the same as java_export with the addition of:
       lib_name: Name of the library that has been built.

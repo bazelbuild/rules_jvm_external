@@ -9,6 +9,7 @@ java_library(
     ],
     visibility = [
         "//private/tools/java:__subpackages__",
+        "//tests/com/github/bazelbuild/rules_jvm_external:__subpackages__",
     ],
     deps = [
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external",

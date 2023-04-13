@@ -17,6 +17,7 @@ java_library(
     name = "ListPackages-lib",
     srcs = ["ListPackages.java"],
     visibility = [
+        "//private/tools/java/com/github/bazelbuild/rules_jvm_external:__subpackages__",
         "//tests/com/github/bazelbuild/rules_jvm_external/jar:__pkg__",
     ],
     deps = [

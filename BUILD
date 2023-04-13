@@ -52,9 +52,9 @@ bzl_library(
         "//private:dependency_tree_parser.bzl",
         "//private:java_utilities.bzl",
         "//private:proxy.bzl",
-        "//private:versions.bzl",
         "//private/rules:artifact.bzl",
         "//private/rules:has_maven_deps.bzl",
+        "//private/rules:java.bzl",
         "//private/rules:java_export.bzl",
         "//private/rules:javadoc.bzl",
         "//private/rules:jetifier.bzl",
@@ -78,11 +78,6 @@ bzl_library(
         # stardoc.
         "//visibility:public",
     ],
-)
-
-alias(
-    name = "mirror_coursier",
-    actual = "//scripts:mirror_coursier",
 )
 
 alias(

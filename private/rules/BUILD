@@ -1,6 +1,7 @@
 exports_files([
     "artifact.bzl",
     "has_maven_deps.bzl",
+    "java.bzl",
     "java_export.bzl",
     "javadoc.bzl",
     "jetifier.bzl",

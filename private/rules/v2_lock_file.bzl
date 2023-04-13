@@ -116,6 +116,8 @@ def _get_artifacts(lock_file_contents):
 
             urls = []
             for (repo, artifacts_within_repo) in repositories.items():
+                if not repo.endswith("/"):
+                    repo += "/"
                 if key in artifacts_within_repo:
                     urls.append("%s%s" % (repo, _to_m2_path(root_unpacked)))
 

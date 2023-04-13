@@ -1,0 +1,131 @@
+load("@rules_jvm_external//private/rules:jvm_import.bzl", "jvm_import")
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
+java_library(
+    name = "gradle",
+    exports = [
+        ":gradle-runtime-jars",
+        artifact("com.esotericsoftware.kryo:kryo", repository_name = "rules_jvm_external_deps"),
+        artifact("commons-io:commons-io", repository_name = "rules_jvm_external_deps"),
+        artifact("commons-lang:commons-lang", repository_name = "rules_jvm_external_deps"),
+        artifact("org.jetbrains.kotlin:kotlin-daemon-embeddable", repository_name = "rules_jvm_external_deps"),
+        artifact("org.jetbrains.kotlin:kotlin-stdlib", repository_name = "rules_jvm_external_deps"),
+        artifact("org.jetbrains.kotlin:kotlin-stdlib-common", repository_name = "rules_jvm_external_deps"),
+        artifact("org.apache.ant:ant", repository_name = "rules_jvm_external_deps"),
+        artifact("org.apache.commons:commons-compress", repository_name = "rules_jvm_external_deps"),
+        artifact("org.apache.ivy:ivy", repository_name = "rules_jvm_external_deps"),
+        artifact("org.codehaus.groovy:groovy-ant", repository_name = "rules_jvm_external_deps"),
+        artifact("org.codehaus.groovy:groovy-json", repository_name = "rules_jvm_external_deps"),
+        artifact("org.fusesource.jansi:jansi", repository_name = "rules_jvm_external_deps"),
+        artifact("org.ow2.asm:asm", repository_name = "rules_jvm_external_deps"),
+        artifact("org.slf4j:jul-to-slf4j", repository_name = "rules_jvm_external_deps"),
+        artifact("org.slf4j:log4j-over-slf4j", repository_name = "rules_jvm_external_deps"),
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+GRADLE_VERSION = "7.6"
+PREFIX = "gradle-%s/lib/" % GRADLE_VERSION
+
+KOTLIN_VERSION = "1.7.10"
+NATIVE_VERSION = "0.22-milestone-24"
+
+MODULES = [
+    "file-events-%s.jar" % NATIVE_VERSION,
+    "gradle-base-annotations-%s.jar" % GRADLE_VERSION,
+    "gradle-base-services-%s.jar" % GRADLE_VERSION,
+    "gradle-base-services-groovy-%s.jar" % GRADLE_VERSION,
+    "gradle-build-cache-%s.jar" % GRADLE_VERSION,
+    "gradle-build-cache-base-%s.jar" % GRADLE_VERSION,
+    "gradle-build-cache-packaging-%s.jar" % GRADLE_VERSION,
+    "gradle-build-events-%s.jar" % GRADLE_VERSION,
+    "gradle-build-operations-%s.jar" % GRADLE_VERSION,
+    "gradle-build-option-%s.jar" % GRADLE_VERSION,
+    "gradle-cli-%s.jar" % GRADLE_VERSION,
+    "gradle-core-%s.jar" % GRADLE_VERSION,
+    "gradle-core-api-%s.jar" % GRADLE_VERSION,
+    "gradle-enterprise-logging-%s.jar" % GRADLE_VERSION,
+    "gradle-enterprise-operations-%s.jar" % GRADLE_VERSION,
+    "gradle-enterprise-workers-%s.jar" % GRADLE_VERSION,
+    "gradle-execution-%s.jar" % GRADLE_VERSION,
+    "gradle-file-collections-%s.jar" % GRADLE_VERSION,
+    "gradle-file-temp-%s.jar" % GRADLE_VERSION,
+    "gradle-file-watching-%s.jar" % GRADLE_VERSION,
+    "gradle-files-%s.jar" % GRADLE_VERSION,
+    "gradle-functional-%s.jar" % GRADLE_VERSION,
+    "gradle-hashing-%s.jar" % GRADLE_VERSION,
+    "gradle-installation-beacon-%s.jar" % GRADLE_VERSION,
+    "gradle-jvm-services-%s.jar" % GRADLE_VERSION,
+    "gradle-kotlin-dsl-%s.jar" % GRADLE_VERSION,
+    "gradle-kotlin-dsl-tooling-models-%s.jar" % GRADLE_VERSION,
+    "gradle-launcher-%s.jar" % GRADLE_VERSION,
+    "gradle-logging-%s.jar" % GRADLE_VERSION,
+    "gradle-logging-api-%s.jar" % GRADLE_VERSION,
+    "gradle-messaging-%s.jar" % GRADLE_VERSION,
+    "gradle-model-core-%s.jar" % GRADLE_VERSION,
+    "gradle-model-groovy-%s.jar" % GRADLE_VERSION,
+    "gradle-native-%s.jar" % GRADLE_VERSION,
+    "gradle-normalization-java-%s.jar" % GRADLE_VERSION,
+    "gradle-persistent-cache-%s.jar" % GRADLE_VERSION,
+    "gradle-problems-%s.jar" % GRADLE_VERSION,
+    "gradle-process-services-%s.jar" % GRADLE_VERSION,
+    "gradle-resources-%s.jar" % GRADLE_VERSION,
+    "gradle-runtime-api-info-%s.jar" % GRADLE_VERSION,
+    "gradle-snapshots-%s.jar" % GRADLE_VERSION,
+    "gradle-tooling-api-%s.jar" % GRADLE_VERSION,
+    "gradle-worker-processes-%s.jar" % GRADLE_VERSION,
+    "gradle-worker-services-%s.jar" % GRADLE_VERSION,
+    "gradle-wrapper-shared-%s.jar" % GRADLE_VERSION,
+    "native-platform-%s.jar" % NATIVE_VERSION,
+    "native-platform-freebsd-amd64-libcpp-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-aarch64-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-aarch64-ncurses5-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-aarch64-ncurses6-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-amd64-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-amd64-ncurses5-%s.jar" % NATIVE_VERSION,
+    "native-platform-linux-amd64-ncurses6-%s.jar" % NATIVE_VERSION,
+    "native-platform-osx-aarch64-%s.jar" % NATIVE_VERSION,
+    "native-platform-osx-amd64-%s.jar" % NATIVE_VERSION,
+    "native-platform-windows-amd64-%s.jar" % NATIVE_VERSION,
+    "native-platform-windows-amd64-min-%s.jar" % NATIVE_VERSION,
+    "native-platform-windows-i386-%s.jar" % NATIVE_VERSION,
+    "native-platform-windows-i386-min-%s.jar" % NATIVE_VERSION,
+    "plugins/gradle-composite-builds-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-configuration-cache-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-dependency-management-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-language-groovy-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-language-java-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-language-jvm-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-platform-base-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-platform-jvm-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-plugin-use-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-plugins-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-reporting-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-resources-http-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-security-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-testing-base-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-testing-jvm-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-workers-%s.jar" % GRADLE_VERSION,
+    "plugins/gradle-version-control-%s.jar" % GRADLE_VERSION,
+
+    # We need to keep this version in the tree
+    "slf4j-api-1.7.30.jar",
+]
+
+RUNTIME_DEPS = [PREFIX + m for m in MODULES]
+
+[
+    jvm_import(
+        name = jar.split("/")[-1],
+        jars = [jar],
+    )
+    for jar in RUNTIME_DEPS
+]
+
+java_library(
+    name = "gradle-runtime-jars",
+    runtime_deps = [jar.split("/")[-1] for jar in RUNTIME_DEPS],
+    exports = [jar.split("/")[-1] for jar in RUNTIME_DEPS],
+)

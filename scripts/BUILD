@@ -1,4 +1,3 @@
-load("//private:versions.bzl", "COURSIER_CLI_HTTP_FILE_NAME")
 load("//private/rules:artifact.bzl", "artifact")
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
 
@@ -12,13 +11,6 @@ genrule(
     }),
     outs = ["buildifier"],
     cmd = "cp $< $@",
-)
-
-sh_binary(
-    name = "mirror_coursier",
-    srcs = [":mirror_coursier.sh"],
-    data = ["@" + COURSIER_CLI_HTTP_FILE_NAME + "//file"],
-    visibility = ["//:__pkg__"],
 )
 
 genrule(
@@ -109,11 +101,14 @@ sh_binary(
         "list_packages_deploy.jar",
         "$(location //private/tools/java/com/github/bazelbuild/rules_jvm_external/maven:outdated_deploy.jar)",
         "outdated_deploy.jar",
+        "$(location //private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/cmd:Main_deploy.jar)",
+        "resolver_deploy.jar",
     ],
     data = [
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external:hasher-tool_deploy.jar",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/coursier:LockFileConverter_deploy.jar",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/jar:ListPackages_deploy.jar",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/maven:outdated_deploy.jar",
+        "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/cmd:Main_deploy.jar",
     ],
 )
