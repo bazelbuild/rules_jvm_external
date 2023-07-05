@@ -5,6 +5,7 @@ MavenPublishInfo = provider(
         "javadocs": "Javadoc jar file for documentation files",
         "artifact_jar": "Jar with the code and metadata for execution",
         "source_jar": "Jar with the source code for review",
+        "target": "The original `Label` that is being published",
     },
 )
 
@@ -14,7 +15,7 @@ echo "Uploading {coordinates} to {maven_repo}"
 {uploader} '{maven_repo}' '{gpg_sign}' '{user}' '{password}' '{coordinates}' '{pom}' '{artifact_jar}' '{source_jar}' '{javadoc}'
 """
 
-def _maven_publish_impl(ctx):
+def maven_publish_impl(ctx):
     executable = ctx.actions.declare_file("%s-publisher" % ctx.attr.name)
 
     maven_repo = ctx.var.get("maven_repo", "")
@@ -72,7 +73,7 @@ def _maven_publish_impl(ctx):
     ]
 
 maven_publish = rule(
-    _maven_publish_impl,
+    maven_publish_impl,
     doc = """Publish artifacts to a maven repository.
 
 The maven repository may accessed locally using a `file://` URL, or
