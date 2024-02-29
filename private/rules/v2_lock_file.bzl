@@ -165,6 +165,7 @@ def _render_lock_file(lock_file_contents, input_hash):
     if lock_file_contents.get("skipped"):
         contents.append("  \"skipped\": %s," % json.encode_indent(lock_file_contents["skipped"], prefix = "  ", indent = "  "))
     contents.append("  \"packages\": %s," % json.encode_indent(lock_file_contents["packages"], prefix = "  ", indent = "  "))
+    contents.append("  \"services\": %s," % json.encode_indent(lock_file_contents["services"], prefix = "  ", indent = "  "))
     if lock_file_contents.get("m2local"):
         contents.append("  \"m2local\": true,")
     contents.append("  \"repositories\": {")

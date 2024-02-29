@@ -25,11 +25,14 @@ java_test(
         "@hamcrest_core_for_test//file",
         "@hamcrest_core_srcs_for_test//file",
         "@junit_platform_commons_for_test//file",
+        "@lombok_for_test//file",
+        "//tests/custom_maven_install:service_indexing_testing.json",
     ],
     test_class = "com.github.bazelbuild.rules_jvm_external.jar.IndexJarTest",
     deps = [
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/jar:IndexJar-lib",
         "@bazel_tools//tools/java/runfiles",
+        "@rules_jvm_external_deps//:com_google_code_gson_gson",
         artifact(
             "junit:junit",
             repository_name = "regression_testing",

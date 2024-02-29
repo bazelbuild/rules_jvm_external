@@ -25,6 +25,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -165,6 +168,12 @@ public class LockFileConverter {
         packages = new TreeSet<>(depPackages);
       }
 
+      SortedMap<String, SortedSet<String>> services = new TreeMap<>();
+      Object rawServices = coursierDep.get("services");
+      if (rawServices != null) {
+        services = new TreeMap<>((Map<String, SortedSet<String>>) rawServices);
+      }
+
       toReturn.add(
           new DependencyInfo(
               coords,
@@ -172,7 +181,8 @@ public class LockFileConverter {
               file == null ? null : Paths.get(file),
               (String) coursierDep.get("sha256"),
               directDeps,
-              packages));
+              packages,
+              services));
     }
 
     return toReturn;

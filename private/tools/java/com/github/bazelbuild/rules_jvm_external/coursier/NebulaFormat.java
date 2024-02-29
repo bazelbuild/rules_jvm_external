@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class NebulaFormat {
     Map<String, Map<String, Object>> artifacts = new TreeMap<>();
     Map<String, Set<String>> deps = new TreeMap<>();
     Map<String, Set<String>> packages = new TreeMap<>();
+    Map<String, Map<String, SortedSet<String>>> services = new TreeMap<>();
     Map<String, Set<String>> repos = new LinkedHashMap<>();
     repositories.forEach(r -> repos.put(stripAuthenticationInformation(r), new TreeSet<>()));
 
@@ -83,6 +85,7 @@ public class NebulaFormat {
                   .map(Object::toString)
                   .collect(Collectors.toCollection(TreeSet::new)));
           packages.put(key, info.getPackages());
+          services.put(key, info.getServices());
 
           if (info.getPath() != null) {
             // Regularise paths to UNIX format
@@ -94,6 +97,7 @@ public class NebulaFormat {
     lock.put("artifacts", artifacts);
     lock.put("dependencies", removeEmptyItems(deps));
     lock.put("packages", removeEmptyItems(packages));
+    lock.put("services", removeEmptyItemsMap(services));
     if (isUsingM2Local) {
       lock.put("m2local", true);
     }
@@ -123,6 +127,20 @@ public class NebulaFormat {
                 },
                 TreeMap::new));
   }
+
+  private <K, VK, VV> Map<K, Map<VK, VV>> removeEmptyItemsMap(Map<K, Map<VK, VV>> input) {
+    return input.entrySet().stream()
+        .filter(e -> !e.getValue().isEmpty())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (l, r) -> {
+                  l.putAll(r);
+                  return l;
+                },
+                TreeMap::new));
+}
 
   private String stripAuthenticationInformation(String possibleUri) {
     try {

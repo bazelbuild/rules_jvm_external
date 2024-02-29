@@ -5,4 +5,5 @@ exports_files([
     "regression_testing_install.json",
     "m2local_testing_with_pinned_file_install.json",
     "artifact_with_plus_repin_install.json",
+    "service_indexing_testing.json",
 ])
