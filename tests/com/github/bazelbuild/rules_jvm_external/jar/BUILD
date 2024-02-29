@@ -17,8 +17,8 @@ java_test(
 )
 
 java_test(
-    name = "ListPackagesTest",
-    srcs = ["ListPackagesTest.java"],
+    name = "IndexJarTest",
+    srcs = ["IndexJarTest.java"],
     data = [
         "@google_api_services_compute_javadoc_for_test//file",
         "@gson_for_test//file",
@@ -26,9 +26,9 @@ java_test(
         "@hamcrest_core_srcs_for_test//file",
         "@junit_platform_commons_for_test//file",
     ],
-    test_class = "com.github.bazelbuild.rules_jvm_external.jar.ListPackagesTest",
+    test_class = "com.github.bazelbuild.rules_jvm_external.jar.IndexJarTest",
     deps = [
-        "//private/tools/java/com/github/bazelbuild/rules_jvm_external/jar:ListPackages-lib",
+        "//private/tools/java/com/github/bazelbuild/rules_jvm_external/jar:IndexJar-lib",
         "@bazel_tools//tools/java/runfiles",
         artifact(
             "junit:junit",

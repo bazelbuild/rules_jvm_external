@@ -17,8 +17,8 @@ java_binary(
 )
 
 java_library(
-    name = "ListPackages-lib",
-    srcs = ["ListPackages.java"],
+    name = "IndexJar-lib",
+    srcs = ["IndexJar.java"],
     visibility = [
         "//tests/com/github/bazelbuild/rules_jvm_external/jar:__pkg__",
     ],
@@ -31,11 +31,11 @@ java_library(
 )
 
 java_binary(
-    name = "ListPackages",
-    main_class = "com.github.bazelbuild.rules_jvm_external.jar.ListPackages",
+    name = "IndexJar",
+    main_class = "com.github.bazelbuild.rules_jvm_external.jar.IndexJar",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":ListPackages-lib",
+        ":IndexJar-lib",
     ],
 )
 

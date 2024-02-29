@@ -20,7 +20,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 
-public class ListPackages {
+public class IndexJar {
 
   private static final Predicate<String> IS_NUMERIC_VERSION =
       Pattern.compile("[1-9][0-9]*").asPredicate();
@@ -37,7 +37,7 @@ public class ListPackages {
             .map(
                 path -> {
                   try {
-                    SortedSet<String> packages = process(Paths.get(path));
+                    SortedSet<String> packages = index(Paths.get(path));
                     return new AbstractMap.SimpleEntry<>(path, packages);
                   } catch (IOException e) {
                     throw new UncheckedIOException(e);
@@ -54,7 +54,7 @@ public class ListPackages {
     System.out.println(new Gson().toJson(index));
   }
 
-  public static SortedSet<String> process(Path path) throws IOException {
+  public static SortedSet<String> index(Path path) throws IOException {
     SortedSet<String> packages = new TreeSet<>();
     try (InputStream fis = new BufferedInputStream(Files.newInputStream(path));
         ZipInputStream zis = new ZipInputStream(fis)) {
