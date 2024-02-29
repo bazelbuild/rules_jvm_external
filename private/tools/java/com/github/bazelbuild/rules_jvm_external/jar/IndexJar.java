@@ -25,20 +25,32 @@ public class IndexJar {
   private static final Predicate<String> IS_NUMERIC_VERSION =
       Pattern.compile("[1-9][0-9]*").asPredicate();
 
+  public static class PerJarIndexResults {
+    private final SortedSet<String> packages;
+
+    public PerJarIndexResults(SortedSet<String> packages) {
+      this.packages = packages;
+    }
+
+    public SortedSet<String> getPackages() {
+      return this.packages;
+    }
+  }
+
   public static void main(String[] args) throws IOException {
     if (args.length != 2 || !"--argsfile".equals(args[0])) {
       System.err.printf("Required args: --argsfile /path/to/argsfile%n");
       System.exit(1);
     }
 
-    TreeMap<String, SortedSet<String>> index =
+    TreeMap<String, PerJarIndexResults> index =
         Files.lines(Paths.get(args[1]))
             .parallel()
             .map(
                 path -> {
                   try {
-                    SortedSet<String> packages = index(Paths.get(path));
-                    return new AbstractMap.SimpleEntry<>(path, packages);
+                    PerJarIndexResults results = index(Paths.get(path));
+                    return new AbstractMap.SimpleEntry<>(path, results);
                   } catch (IOException e) {
                     throw new UncheckedIOException(e);
                   }
@@ -54,7 +66,7 @@ public class IndexJar {
     System.out.println(new Gson().toJson(index));
   }
 
-  public static SortedSet<String> index(Path path) throws IOException {
+  public static PerJarIndexResults index(Path path) throws IOException {
     SortedSet<String> packages = new TreeSet<>();
     try (InputStream fis = new BufferedInputStream(Files.newInputStream(path));
         ZipInputStream zis = new ZipInputStream(fis)) {
@@ -74,7 +86,7 @@ public class IndexJar {
         System.err.printf("Caught ZipException: %s%n", e);
       }
     }
-    return packages;
+    return new PerJarIndexResults(packages);
   }
 
   private static String extractPackageName(String zipEntryName) {

@@ -1078,20 +1078,20 @@ def _coursier_fetch_impl(repository_ctx):
         path = str(repository_ctx.path(parts[1]))
         shas[path] = parts[0]
 
-    list_packages_stdout = _execute_with_argsfile(
+    index_jars_stdout = _execute_with_argsfile(
         repository_ctx,
-        repository_ctx.attr._list_packages,
-        "package_lister",
-        "Indexing jar packages",
-        "indexing jar packages",
+        repository_ctx.attr._index_jar,
+        "jar_indexer",
+        "Indexing jars",
+        "indexing jars",
         files_to_inspect,
     )
 
-    jars_to_packages = json.decode(list_packages_stdout)
-    for jar, packages in jars_to_packages.items():
+    jars_to_index_results = json.decode(index_jars_stdout)
+    for jar, index_results in jars_to_index_results.items():
         path = str(repository_ctx.path(jar))
         if path != jar:
-            jars_to_packages[path] = jars_to_packages.pop(jar)
+            jars_to_index_results[path] = jars_to_index_results.pop(jar)
 
     for artifact in dep_tree["dependencies"]:
         file = artifact["file"]
@@ -1112,7 +1112,7 @@ def _coursier_fetch_impl(repository_ctx):
                 artifact.pop("url")
             continue
         artifact.update({"sha256": shas[path]})
-        artifact.update({"packages": jars_to_packages[path]})
+        artifact.update({"packages": jars_to_index_results[path]["packages"]})
 
     # Keep the original output from coursier for debugging
     repository_ctx.file(
@@ -1321,7 +1321,7 @@ pinned_coursier_fetch = repository_rule(
 coursier_fetch = repository_rule(
     attrs = {
         "_sha256_hasher": attr.label(default = "//private/tools/prebuilt:hasher_deploy.jar"),
-        "_list_packages": attr.label(default = "//private/tools/prebuilt:list_packages_deploy.jar"),
+        "_index_jar": attr.label(default = "//private/tools/prebuilt:index_jar_deploy.jar"),
         "_lock_file_converter": attr.label(default = "//private/tools/prebuilt:lock_file_converter_deploy.jar"),
         "_pin": attr.label(default = "//private:pin.sh"),
         "_compat_repository": attr.label(default = "//private:compat_repository.bzl"),
