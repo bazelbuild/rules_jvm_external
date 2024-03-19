@@ -133,7 +133,7 @@ def _generate_target(
         jar_versionless_target_labels.append(target_label)
         dylib = simple_coord.split(":")[-1] + "." + packaging
         to_return.append(
-"""
+            """
 genrule(
     name = "{dylib}_extension",
     srcs = ["@{repository}//file"],
@@ -141,10 +141,10 @@ genrule(
     cmd = "cp $< $@",
     visibility = ["//visibility:public"],
 )""".format(
-    dylib = dylib,
-    repository = escape(artifact["coordinates"])))
-
-
+                dylib = dylib,
+                repository = escape(artifact["coordinates"]),
+            ),
+        )
 
     # 4. Generate the deps attribute with references to other target labels.
     #
@@ -160,7 +160,6 @@ genrule(
         target_import_string.append("\truntime_deps = [")
     else:
         target_import_string.append("\tdeps = [")
-
 
     # Dedupe dependencies here. Sometimes coursier will return "x.y:z:aar:version" and "x.y:z:version" in the
     # same list of dependencies.

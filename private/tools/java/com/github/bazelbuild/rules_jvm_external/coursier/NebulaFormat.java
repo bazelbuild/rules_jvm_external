@@ -117,7 +117,7 @@ public class NebulaFormat {
 
     lock.put("skipped", skipped);
     if (conflicts != null && !conflicts.isEmpty()) {
-      lock.put("conflict_resolution", conflicts);
+      lock.put("conflict_resolution", new TreeMap<>(conflicts));
     }
     lock.put("files", files);
 

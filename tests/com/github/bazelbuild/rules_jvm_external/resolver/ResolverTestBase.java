@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
@@ -72,7 +73,8 @@ public abstract class ResolverTestBase {
 
     Path repo = MavenRepo.create().add(coords).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), coords)).getResolution();
 
     assertEquals(1, resolved.nodes().size());
     assertEquals(coords, resolved.nodes().iterator().next());
@@ -85,7 +87,8 @@ public abstract class ResolverTestBase {
 
     Path repo = MavenRepo.create().add(dep).add(main, dep).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), main));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), main)).getResolution();
 
     Set<Coordinates> nodes = resolved.nodes();
     assertEquals(2, nodes.size());
@@ -100,7 +103,8 @@ public abstract class ResolverTestBase {
 
     Path repo = MavenRepo.create().add(grandDep).add(dep, grandDep).add(main, dep).getPath();
 
-    Graph<Coordinates> graph = resolver.resolve(prepareRequestFor(repo.toUri(), main));
+    Graph<Coordinates> graph =
+        resolver.resolve(prepareRequestFor(repo.toUri(), main)).getResolution();
 
     Set<Coordinates> nodes = graph.nodes();
     assertTrue(nodes.contains(main));
@@ -119,7 +123,7 @@ public abstract class ResolverTestBase {
         prepareRequestFor(repo.toUri() /* deliberately left blank */)
             .addArtifact(singleDep.toString(), "com.example:no-deps");
 
-    Graph<Coordinates> graph = resolver.resolve(request);
+    Graph<Coordinates> graph = resolver.resolve(request).getResolution();
 
     Set<Coordinates> nodes = graph.nodes();
     assertFalse(nodes.contains(noDeps));
@@ -136,7 +140,7 @@ public abstract class ResolverTestBase {
     ResolutionRequest request =
         prepareRequestFor(repo.toUri(), singleDep).exclude("com.example:no-deps");
 
-    Graph<Coordinates> graph = resolver.resolve(request);
+    Graph<Coordinates> graph = resolver.resolve(request).getResolution();
 
     Set<Coordinates> nodes = graph.nodes();
     assertFalse(nodes.contains(noDeps));
@@ -151,7 +155,7 @@ public abstract class ResolverTestBase {
     Path repo = MavenRepo.create().add(jar).add(classified).getPath();
 
     Graph<Coordinates> resolved =
-        resolver.resolve(prepareRequestFor(repo.toUri(), jar, classified));
+        resolver.resolve(prepareRequestFor(repo.toUri(), jar, classified)).getResolution();
 
     Set<Coordinates> nodes = resolved.nodes();
     assertEquals(2, nodes.size());
@@ -172,7 +176,8 @@ public abstract class ResolverTestBase {
     int port = server.getAddress().getPort();
     URI remote = URI.create("http://localhost:" + port);
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(remote, coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(remote, coords)).getResolution();
 
     assertEquals(1, resolved.nodes().size());
     assertEquals(coords, resolved.nodes().iterator().next());
@@ -199,7 +204,8 @@ public abstract class ResolverTestBase {
 
     URI remote = URI.create("http://cheese:hunter2@localhost:" + port);
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(remote, coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(remote, coords)).getResolution();
 
     assertEquals(1, resolved.nodes().size());
     assertEquals(coords, resolved.nodes().iterator().next());
@@ -245,7 +251,8 @@ public abstract class ResolverTestBase {
 
     Path repo = MavenRepo.create().add(first).add(second).add(parent, first, second).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), parentCoords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), parentCoords)).getResolution();
 
     // We don't want nodes with a classifier of `pom` to have appeared in the graph
     assertEquals(Set.of(first, second, parentCoords), resolved.nodes());
@@ -288,7 +295,8 @@ public abstract class ResolverTestBase {
                     parentCoords.getVersion()))
             .getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), grandParent));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), grandParent)).getResolution();
 
     assertEquals(Set.of(grandParent, parentCoords, first, second), resolved.nodes());
   }
@@ -301,7 +309,8 @@ public abstract class ResolverTestBase {
 
     Path repo = MavenRepo.create().add(model).writePomFile(model).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), coords)).getResolution();
     assertEquals(1, resolved.nodes().size());
 
     Coordinates resolvedCoords = resolved.nodes().iterator().next();
@@ -330,7 +339,7 @@ public abstract class ResolverTestBase {
     ResolutionRequest request = config.getResolutionRequest();
     request.addRepository(repo.toUri());
 
-    Graph<Coordinates> resolved = resolver.resolve(request);
+    Graph<Coordinates> resolved = resolver.resolve(request).getResolution();
 
     assertEquals(resolved.nodes(), Set.of(coords));
   }
@@ -348,7 +357,8 @@ public abstract class ResolverTestBase {
     model.addDependency(jdkDep);
 
     Path repo = MavenRepo.create().add(model).getPath();
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), coords)).getResolution();
 
     assertEquals(Set.of(coords), resolved.nodes());
   }
@@ -362,7 +372,8 @@ public abstract class ResolverTestBase {
     Path repo =
         MavenRepo.create().add(sharedDep).add(first, sharedDep).add(second, sharedDep).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), first, second));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), first, second)).getResolution();
     assertEquals(3, resolved.nodes().size());
 
     Set<Coordinates> firstSuccessors = resolved.successors(first);
@@ -432,8 +443,86 @@ public abstract class ResolverTestBase {
     Path repo =
         MavenRepo.create().add(leafCoords).add(parentModel).add(childModel, leafCoords).getPath();
 
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(repo.toUri(), childCoords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), childCoords)).getResolution();
     assertEquals(Set.of(childCoords, leafCoords), resolved.nodes());
+  }
+
+  @Test
+  public void shouldIndicateWhenConflictsAreDetected() {
+    Coordinates olderVersion = new Coordinates("com.example:child:1.0");
+    Coordinates dependsOnOlder = new Coordinates("com.example:foo:2.0");
+    Coordinates newerVersion = new Coordinates("com.example:child:1.5");
+    Coordinates dependsOnNewer = new Coordinates("com.example:bar:4.2");
+    Coordinates root = new Coordinates("com.example:root:1.0");
+
+    Path repo =
+        MavenRepo.create()
+            .add(newerVersion)
+            .add(dependsOnNewer, newerVersion)
+            .add(olderVersion)
+            .add(dependsOnOlder, olderVersion)
+            .add(root, dependsOnNewer, dependsOnOlder)
+            .getPath();
+
+    ResolutionResult result = resolver.resolve(prepareRequestFor(repo.toUri(), root));
+    Set<Conflict> conflicts = result.getConflicts();
+
+    assertEquals(Set.of(new Conflict()), conflicts);
+  }
+
+  @Test
+  public void conflictsAreIgnoredIfSpecifiedInSetOfArtifactsToResolve() {
+    Coordinates olderVersion = new Coordinates("com.example:child:1.0");
+    Coordinates dependsOnOlder = new Coordinates("com.example:foo:2.0");
+    Coordinates newerVersion = new Coordinates("com.example:child:1.5");
+    Coordinates dependsOnNewer = new Coordinates("com.example:bar:4.2");
+    Coordinates root = new Coordinates("com.example:root:1.0");
+
+    Path repo =
+        MavenRepo.create()
+            .add(newerVersion)
+            .add(dependsOnNewer, newerVersion)
+            .add(olderVersion)
+            .add(dependsOnOlder, olderVersion)
+            .add(root, dependsOnNewer, dependsOnOlder)
+            .getPath();
+
+    ResolutionResult result = resolver.resolve(prepareRequestFor(repo.toUri(), root, newerVersion));
+    Set<Conflict> conflicts = result.getConflicts();
+
+    assertEquals(Set.of(Set.of(olderVersion, newerVersion)), conflicts);
+  }
+
+  @Test
+  public void shouldConvergeToASingleVersionOfADependency() {
+    Coordinates olderVersion = new Coordinates("com.example:child:1.0");
+    Coordinates dependsOnOlder = new Coordinates("com.example:foo:2.0");
+    Coordinates newerVersion = new Coordinates("com.example:child:1.5");
+    Coordinates dependsOnNewer = new Coordinates("com.example:bar:4.2");
+    Coordinates root = new Coordinates("com.example:root:1.0");
+
+    Path repo =
+        MavenRepo.create()
+            .add(newerVersion)
+            .add(dependsOnNewer, newerVersion)
+            .add(olderVersion)
+            .add(dependsOnOlder, olderVersion)
+            .add(root, dependsOnNewer, dependsOnOlder)
+            .getPath();
+
+    Graph<Coordinates> resolution =
+        resolver.resolve(prepareRequestFor(repo.toUri(), root)).getResolution();
+
+    // We don't care whether we have version 1.0 or 1.5 (different resolvers
+    // might pick different versions), but there should only be one version
+    // of this dependency.
+    Set<Coordinates> children =
+        resolution.nodes().stream()
+            .filter(c -> "child".equals(c.getArtifactId()))
+            .collect(Collectors.toSet());
+
+    assertEquals(children.toString(), 1, children.size());
   }
 
   private Model createModel(Coordinates coords) {
@@ -472,7 +561,8 @@ public abstract class ResolverTestBase {
     URI remote = URI.create("http://localhost:" + port);
 
     Resolver resolver = getResolver(netrc, new NullListener());
-    Graph<Coordinates> resolved = resolver.resolve(prepareRequestFor(remote, coords));
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(remote, coords)).getResolution();
 
     assertEquals(1, resolved.nodes().size());
     assertEquals(coords, resolved.nodes().iterator().next());
