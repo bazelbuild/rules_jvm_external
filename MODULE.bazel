@@ -1,7 +1,7 @@
 module(
     name = "rules_jvm_external",
     compatibility_level = 2,
-    version = "6.0",
+    version = "6.1",
 )
 
 bazel_dep(
@@ -36,15 +36,15 @@ maven = use_extension(":extensions.bzl", "maven")
 maven.install(
     name = "rules_jvm_external_deps",
     artifacts = [
-        "com.google.auth:google-auth-library-credentials:1.19.0",
-        "com.google.auth:google-auth-library-oauth2-http:1.19.0",
-        "com.google.cloud:google-cloud-core:2.22.0",
-        "com.google.cloud:google-cloud-storage:2.26.1",
+        "com.google.auth:google-auth-library-credentials:1.23.0",
+        "com.google.auth:google-auth-library-oauth2-http:1.23.0",
+        "com.google.cloud:google-cloud-core:2.33.0",
+        "com.google.cloud:google-cloud-storage:2.34.0",
         "com.google.code.gson:gson:2.10.1",
-        "com.google.googlejavaformat:google-java-format:1.17.0",
-        "com.google.guava:guava:32.1.2-jre",
-        "org.apache.maven:maven-artifact:3.9.4",
-        "software.amazon.awssdk:s3:2.20.128",
+        "com.google.googlejavaformat:google-java-format:1.20.0",
+        "com.google.guava:guava:33.0.0-jre",
+        "org.apache.maven:maven-artifact:3.9.6",
+        "software.amazon.awssdk:s3:2.24.9",
     ],
     lock_file = "//:rules_jvm_external_deps_install.json",
 )
