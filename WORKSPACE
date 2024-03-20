@@ -426,6 +426,14 @@ maven_install(
 )
 
 maven_install(
+    name = "service_indexing_testing",
+    artifacts = [
+        "org.projectlombok.lombok:1.18.22",
+    ],
+    maven_install_json = "//tests/custom_maven_install:service_indexing_testing.json"
+)
+
+maven_install(
     name = "jvm_import_test",
     artifacts = [
         "com.google.code.findbugs:jsr305:3.0.2",
@@ -677,6 +685,15 @@ http_file(
     sha256 = "b03be5ee8effba3bfbaae53891a9c01d70e2e3bd82ad8889d78e641b22bd76c2",
     urls = [
         "https://repo1.maven.org/maven2/com/google/apis/google-api-services-compute/v1-rev235-1.25.0/google-api-services-compute-v1-rev235-1.25.0-javadoc.jar",
+    ],
+)
+
+http_file(
+    name = "lombok_for_test",
+    downloaded_file_path = "lombok-1.18.22.jar",
+    sha256 = "ecef1581411d7a82cc04281667ee0bac5d7c0a5aae74cfc38430396c91c31831",
+    urls = [
+        "https://repo1.maven.org/maven2/org/projectlombok/lombok/1.18.22/lombok-1.18.22.jar",
     ],
 )
 

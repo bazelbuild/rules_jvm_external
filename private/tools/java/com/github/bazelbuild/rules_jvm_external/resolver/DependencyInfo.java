@@ -6,6 +6,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class DependencyInfo {
@@ -16,6 +18,7 @@ public class DependencyInfo {
   private final String sha256;
   private final Set<Coordinates> dependencies;
   private final Set<String> packages;
+  private final SortedMap<String, SortedSet<String>> services;
 
   public DependencyInfo(
       Coordinates coordinates,
@@ -23,7 +26,8 @@ public class DependencyInfo {
       Path path,
       String sha256,
       Set<Coordinates> dependencies,
-      Set<String> packages) {
+      Set<String> packages,
+      SortedMap<String, SortedSet<String>> services) {
     this.coordinates = coordinates;
     this.repos = ImmutableSet.copyOf(repos);
     this.path = path;
@@ -31,6 +35,7 @@ public class DependencyInfo {
     this.dependencies = ImmutableSet.copyOf(new TreeSet<>(dependencies));
 
     this.packages = ImmutableSet.copyOf(new TreeSet<>(packages));
+    this.services = services;
   }
 
   public Coordinates getCoordinates() {
@@ -53,6 +58,10 @@ public class DependencyInfo {
     return packages;
   }
 
+  public SortedMap<String, SortedSet<String>> getServices() {
+    return services;
+  }
+
   public Path getPath() {
     return path;
   }
@@ -69,11 +78,12 @@ public class DependencyInfo {
     return Objects.equals(coordinates, that.coordinates)
         && Objects.equals(sha256, that.sha256)
         && Objects.equals(dependencies, that.dependencies)
-        && Objects.equals(packages, that.packages);
+        && Objects.equals(packages, that.packages)
+        && Objects.equals(services, that.services);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(coordinates, sha256, dependencies, packages);
+    return Objects.hash(coordinates, sha256, dependencies, packages, services);
   }
 }
