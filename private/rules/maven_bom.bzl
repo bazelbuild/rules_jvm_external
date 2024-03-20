@@ -165,8 +165,6 @@ def maven_bom(
     labels = [_label(je) for je in java_exports]
     fragments = [l.relative(":%s.bom-fragment" % l.name) for l in labels]
 
-    print("Fragments", fragments)
-
     _maven_bom(
         name = name,
         maven_coordinates = maven_coordinates,
