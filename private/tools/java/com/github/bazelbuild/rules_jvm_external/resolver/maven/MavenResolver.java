@@ -15,7 +15,9 @@
 package com.github.bazelbuild.rules_jvm_external.resolver.maven;
 
 import com.github.bazelbuild.rules_jvm_external.Coordinates;
+import com.github.bazelbuild.rules_jvm_external.resolver.Conflict;
 import com.github.bazelbuild.rules_jvm_external.resolver.ResolutionRequest;
+import com.github.bazelbuild.rules_jvm_external.resolver.ResolutionResult;
 import com.github.bazelbuild.rules_jvm_external.resolver.Resolver;
 import com.github.bazelbuild.rules_jvm_external.resolver.events.EventListener;
 import com.github.bazelbuild.rules_jvm_external.resolver.events.LogEvent;
@@ -34,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -126,7 +129,7 @@ public class MavenResolver implements Resolver {
   }
 
   @Override
-  public Graph<Coordinates> resolve(ResolutionRequest request) {
+  public ResolutionResult resolve(ResolutionRequest request) {
     List<RemoteRepository> repos =
         request.getRepositories().stream()
             .map(remoteRepositoryFactory::createFor)
@@ -212,7 +215,50 @@ public class MavenResolver implements Resolver {
       }
     }
 
-    return buildGraph(coordsListener.getRemappings(), directDependencies);
+    Graph<Coordinates> resolution = buildGraph(coordsListener.getRemappings(), directDependencies);
+
+    Set<Coordinates> simpleRequestedDeps =
+        request.getDependencies().stream()
+            .map(com.github.bazelbuild.rules_jvm_external.resolver.Artifact::getCoordinates)
+            .map(
+                c ->
+                    new Coordinates(
+                        c.getGroupId() + ":" + c.getArtifactId() + ":" + c.getVersion()))
+            .collect(Collectors.toSet());
+    Set<Conflict> conflicts = getConflicts(simpleRequestedDeps, directDependencies);
+
+    return new ResolutionResult(resolution, conflicts);
+  }
+
+  private Set<Conflict> getConflicts(
+      Set<Coordinates> userRequestedDependencies, List<DependencyNode> directDependencies) {
+    Set<Conflict> conflicts = new HashSet<>();
+
+    Function<Artifact, Coordinates> simpleForm =
+        a -> new Coordinates(a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion());
+
+    DependencyVisitor collector =
+        new TreeDependencyVisitor(
+            new DependencyNodeVisitor(
+                node -> {
+                  Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
+                  if (!(winner instanceof DependencyNode)) {
+                    return;
+                  }
+
+                  Artifact winningArtifact = ((DependencyNode) winner).getArtifact();
+                  Coordinates winningCoords = simpleForm.apply(winningArtifact);
+                  Artifact artifact = node.getArtifact();
+                  Coordinates nodeCoords = simpleForm.apply(artifact);
+
+                  if (!winningCoords.equals(nodeCoords)) {
+                    if (!userRequestedDependencies.contains(winningCoords)) {
+                      conflicts.add(new Conflict(winningCoords, nodeCoords));
+                    }
+                  }
+                }));
+    directDependencies.forEach(node -> node.accept(collector));
+    return Set.copyOf(conflicts);
   }
 
   private List<Dependency> overrideDependenciesWithUserChoices(
@@ -300,6 +346,7 @@ public class MavenResolver implements Resolver {
                   toReturn.addNode(remapped);
 
                   actualNode.getChildren().stream()
+                      .map(this::getDependencyNode)
                       .map(DependencyNode::getArtifact)
                       .map(this::amendArtifact)
                       .map(MavenCoordinates::asCoordinates)
@@ -315,7 +362,7 @@ public class MavenResolver implements Resolver {
     return ImmutableGraph.copyOf(toReturn);
   }
 
-  private static DependencyNode getDependencyNode(DependencyNode node) {
+  private DependencyNode getDependencyNode(DependencyNode node) {
     Map<?, ?> data = node.getData();
     if (data != null) {
       // By default, aether will trim duplicate dependencies from the graph
@@ -383,9 +430,9 @@ public class MavenResolver implements Resolver {
     // And set the number of threads to use when figuring out how many dependencies to download in
     // parallel.
     configProperties.put("maven.artifact.threads", String.valueOf(maxThreads));
+    configProperties.put(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+    configProperties.put(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
     session.setConfigProperties(Map.copyOf(configProperties));
-    session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-    session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
 
     session.setSystemProperties(System.getProperties());
 
