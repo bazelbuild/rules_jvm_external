@@ -215,10 +215,17 @@ public class MavenResolver implements Resolver {
     }
 
     Graph<Coordinates> resolution = buildGraph(coordsListener.getRemappings(), directDependencies);
-    return new ResolutionResult(resolution, getConflicts(directDependencies));
+    Set<Conflict> conflicts = getConflicts(
+            request.getDependencies().stream()
+                    .map(com.github.bazelbuild.rules_jvm_external.resolver.Artifact::getCoordinates)
+                    .map(c -> new Coordinates(c.getGroupId() + ":" + c.getArtifactId() + ":" + c.getVersion()))
+                    .collect(Collectors.toSet()),
+            directDependencies);
+
+    return new ResolutionResult(resolution, conflicts);
   }
 
-  private Set<Conflict> getConflicts(List<DependencyNode> directDependencies) {
+  private Set<Conflict> getConflicts(Set<Coordinates> userRequestedDependencies, List<DependencyNode> directDependencies) {
     Set<Conflict> conflicts = new HashSet<>();
 
     DependencyVisitor collector =
@@ -248,7 +255,9 @@ public class MavenResolver implements Resolver {
                               + artifact.getVersion());
 
                   if (!winningCoords.equals(nodeCoords)) {
-                    conflicts.add(new Conflict(winningCoords, nodeCoords));
+                    if (!userRequestedDependencies.contains(winningCoords)) {
+                      conflicts.add(new Conflict(winningCoords, nodeCoords));
+                    }
                   }
                 }));
     directDependencies.forEach(node -> node.accept(collector));
