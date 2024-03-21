@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -215,18 +216,26 @@ public class MavenResolver implements Resolver {
     }
 
     Graph<Coordinates> resolution = buildGraph(coordsListener.getRemappings(), directDependencies);
-    Set<Conflict> conflicts = getConflicts(
-            request.getDependencies().stream()
-                    .map(com.github.bazelbuild.rules_jvm_external.resolver.Artifact::getCoordinates)
-                    .map(c -> new Coordinates(c.getGroupId() + ":" + c.getArtifactId() + ":" + c.getVersion()))
-                    .collect(Collectors.toSet()),
-            directDependencies);
+
+    Set<Coordinates> simpleRequestedDeps =
+        request.getDependencies().stream()
+            .map(com.github.bazelbuild.rules_jvm_external.resolver.Artifact::getCoordinates)
+            .map(
+                c ->
+                    new Coordinates(
+                        c.getGroupId() + ":" + c.getArtifactId() + ":" + c.getVersion()))
+            .collect(Collectors.toSet());
+    Set<Conflict> conflicts = getConflicts(simpleRequestedDeps, directDependencies);
 
     return new ResolutionResult(resolution, conflicts);
   }
 
-  private Set<Conflict> getConflicts(Set<Coordinates> userRequestedDependencies, List<DependencyNode> directDependencies) {
+  private Set<Conflict> getConflicts(
+      Set<Coordinates> userRequestedDependencies, List<DependencyNode> directDependencies) {
     Set<Conflict> conflicts = new HashSet<>();
+
+    Function<Artifact, Coordinates> simpleForm =
+        a -> new Coordinates(a.getGroupId() + ":" + a.getArtifactId() + ":" + a.getVersion());
 
     DependencyVisitor collector =
         new TreeDependencyVisitor(
@@ -238,21 +247,9 @@ public class MavenResolver implements Resolver {
                   }
 
                   Artifact winningArtifact = ((DependencyNode) winner).getArtifact();
-                  Coordinates winningCoords =
-                      new Coordinates(
-                          winningArtifact.getGroupId()
-                              + ":"
-                              + winningArtifact.getArtifactId()
-                              + ":"
-                              + winningArtifact.getVersion());
+                  Coordinates winningCoords = simpleForm.apply(winningArtifact);
                   Artifact artifact = node.getArtifact();
-                  Coordinates nodeCoords =
-                      new Coordinates(
-                          artifact.getGroupId()
-                              + ":"
-                              + artifact.getArtifactId()
-                              + ":"
-                              + artifact.getVersion());
+                  Coordinates nodeCoords = simpleForm.apply(artifact);
 
                   if (!winningCoords.equals(nodeCoords)) {
                     if (!userRequestedDependencies.contains(winningCoords)) {
