@@ -70,6 +70,7 @@ maven.install(
         "org.slf4j:slf4j-simple:2.0.9",
         "software.amazon.awssdk:s3:2.20.128",
     ],
+    fail_if_repin_required = True,
     fetch_sources = True,
     lock_file = "//:rules_jvm_external_deps_install.json",
 )
@@ -78,6 +79,8 @@ maven.install(
     artifacts = [
         "com.google.guava:guava:28.0-jre",
     ],
+    fail_if_repin_required = True,
+    lock_file = "//:rules_jvm_external_deps_install.json",
 )
 use_repo(
     maven,
