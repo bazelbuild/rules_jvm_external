@@ -25,7 +25,7 @@ def _jvm_import_impl(ctx):
 
     injar = ctx.files.jars[0]
     if ctx.attr._stamp_manifest[StampManifestProvider].stamp_enabled:
-        outjar = ctx.actions.declare_file("processed_" + injar.basename, sibling = injar)
+        outjar = ctx.actions.declare_file("processed_" + injar.basename)
         args = ctx.actions.args()
         args.add_all(["--source", injar, "--output", outjar])
         args.add_all(["--manifest-entry", "Target-Label:{target_label}".format(target_label = label)])
@@ -40,7 +40,7 @@ def _jvm_import_impl(ctx):
     else:
         outjar = injar
 
-    compilejar = ctx.actions.declare_file("header_" + injar.basename, sibling = injar)
+    compilejar = ctx.actions.declare_file("header_" + injar.basename)
     args = ctx.actions.args()
     args.add_all(["--source", outjar, "--output", compilejar])
 

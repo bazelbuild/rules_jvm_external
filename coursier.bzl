@@ -18,6 +18,7 @@ load(
     "SUPPORTED_PACKAGING_TYPES",
     "contains_git_conflict_markers",
     "escape",
+    "get_packaging",
     "is_maven_local_path",
 )
 load("//private:dependency_tree_parser.bzl", "parser")
@@ -572,6 +573,14 @@ def _pinned_coursier_fetch_impl(repository_ctx):
     netrc_entries = importer.get_netrc_entries(maven_install_json_content)
 
     for artifact in importer.get_artifacts(maven_install_json_content):
+        if not artifact["sha256"]:
+            # some artifacts (most likely POMs) are defined like:
+            # {"coordinates": "org.apache.flink:flink-table:jar:sources:1.11.6", "sha256": None, "file": None, "deps": [], "urls": []}
+            # it makes no sense to generate an artifact for this at all, when this happens artifact will also be None
+            # which relates to https://github.com/bazelbuild/rules_jvm_external/issues/1028
+            continue
+        if not artifact["file"]:
+            fail("there's a sha256 for this artifact but no file defined: %s" % artifact)
         http_file_repository_name = escape(artifact["coordinates"])
         maven_artifacts.extend([artifact["coordinates"]])
         http_files.extend([
@@ -583,6 +592,8 @@ def _pinned_coursier_fetch_impl(repository_ctx):
             # File-path is relative defined from http_file traveling to repository_ctx.
             "        netrc = \"../%s/netrc\"," % (repository_ctx.name),
         ])
+        if get_packaging(artifact["coordinates"]) == "exe":
+            http_files.append("        executable = True,")
         if len(artifact["urls"]) == 0 and importer.has_m2local(maven_install_json_content) and artifact.get("file") != None:
             if _is_windows(repository_ctx):
                 user_home = repository_ctx.os.environ.get("USERPROFILE").replace("\\", "/")
@@ -599,7 +610,7 @@ def _pinned_coursier_fetch_impl(repository_ctx):
 
         # https://github.com/bazelbuild/rules_jvm_external/issues/1028
         # http_rule does not like directories named "build" so prepend v1 to the path.
-        download_path = "v1/%s" % artifact["file"] if artifact["file"] else artifact["file"]
+        download_path = "v1/%s" % artifact["file"]
         http_files.append("        downloaded_file_path = \"%s\"," % download_path)
         http_files.append("    )")
 
@@ -830,6 +841,16 @@ def make_coursier_dep_tree(
                                        "--" +
                                        ":".join([e["group"], e["artifact"]]))
 
+    # extract java_version
+    java_path = _java_path(repository_ctx)
+    java_version = 0
+    if java_path:
+        exec_result = _execute(repository_ctx, [java_path, "-version"])
+        if (exec_result.return_code != 0):
+            fail("Error while running java -version: " + exec_result.stderr)
+
+        java_version = parse_java_version(exec_result.stdout + exec_result.stderr)
+
     cmd = _generate_java_jar_command(repository_ctx, repository_ctx.path("coursier"))
     cmd.extend(["fetch"])
 
@@ -897,7 +918,13 @@ def make_coursier_dep_tree(
         exec_result = _execute(repository_ctx, [java_path, "-version"])
         if (exec_result.return_code != 0):
             fail("Error while running java -version: " + exec_result.stderr)
-        if parse_java_version(exec_result.stdout + exec_result.stderr) > 8:
+
+        java_version = parse_java_version(exec_result.stdout + exec_result.stderr)
+        if java_version > 13:
+            if "-noverify" in cmd:
+                cmd.remove("-noverify")
+
+        if java_version > 8:
             java_cmd = cmd[0]
             java_args = cmd[1:]
 

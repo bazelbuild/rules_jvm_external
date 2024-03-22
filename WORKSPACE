@@ -143,6 +143,10 @@ maven_install(
     ],
 )
 
+load("@global_exclusion_testing//:defs.bzl", _global_exclusion_testing_pinned_maven_install = "pinned_maven_install")
+
+_global_exclusion_testing_pinned_maven_install()
+
 maven_install(
     name = "manifest_stamp_testing",
     artifacts = [

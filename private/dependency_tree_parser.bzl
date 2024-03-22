@@ -29,26 +29,6 @@ load(
     "strip_packaging_and_classifier_and_version",
 )
 
-def _genrule_copy_artifact_from_http_file(artifact, visibilities):
-    http_file_repository = escape(artifact["coordinates"])
-
-    file = artifact.get("out", artifact["file"])
-
-    genrule = [
-        "genrule(",
-        "     name = \"%s_extension\"," % http_file_repository,
-        "     srcs = [\"@%s//file\"]," % http_file_repository,
-        "     outs = [\"%s\"]," % file,
-        "     cmd = \"cp $< $@\",",
-    ]
-    if get_packaging(artifact["coordinates"]) == "exe":
-        genrule.append("     executable = True,")
-    genrule.extend([
-        "     visibility = [%s]" % (",".join(["\"%s\"" % v for v in visibilities])),
-        ")",
-    ])
-    return "\n".join(genrule)
-
 def _deduplicate_list(items):
     seen_items = {}
     unique_items = []
@@ -65,6 +45,13 @@ def _find_repository_url(artifact_url, repositories):
             if len(repository) > len(longest_match or ""):
                 longest_match = repository
     return longest_match
+
+_ARTIFACT_JAR = """
+alias(
+    name = "{artifact_path}",
+    actual = "{source}",
+    visibility = ["//visibility:public"],
+)"""
 
 def _generate_target(
         repository_ctx,
@@ -87,7 +74,7 @@ def _generate_target(
     # (jvm|aar)_import(
     #
     packaging = artifact_path.split(".").pop()
-    if packaging == "jar":
+    if packaging == "jar" or artifact_path.endswith("//file"):
         # Regular `java_import` invokes ijar on all JARs, causing some Scala and
         # Kotlin compile interface JARs to be incorrect. We replace java_import
         # with a simple jvm_import Starlark rule that skips ijar.
@@ -120,7 +107,7 @@ def _generate_target(
     # 	srcjar = "https/repo1.maven.org/maven2/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3-sources.jar",
     #
     is_dylib = False
-    if packaging == "jar":
+    if packaging == "jar" or artifact_path.endswith("//file"):
         target_import_string.append("\tjars = [\"%s\"]," % artifact_path)
         if srcjar_paths != None and target_label in srcjar_paths:
             target_import_string.append("\tsrcjar = \"%s\"," % srcjar_paths[target_label])
@@ -133,7 +120,7 @@ def _generate_target(
         jar_versionless_target_labels.append(target_label)
         dylib = simple_coord.split(":")[-1] + "." + packaging
         to_return.append(
-"""
+            """
 genrule(
     name = "{dylib}_extension",
     srcs = ["@{repository}//file"],
@@ -141,10 +128,10 @@ genrule(
     cmd = "cp $< $@",
     visibility = ["//visibility:public"],
 )""".format(
-    dylib = dylib,
-    repository = escape(artifact["coordinates"])))
-
-
+                dylib = dylib,
+                repository = escape(artifact["coordinates"]),
+            ),
+        )
 
     # 4. Generate the deps attribute with references to other target labels.
     #
@@ -160,7 +147,6 @@ genrule(
         target_import_string.append("\truntime_deps = [")
     else:
         target_import_string.append("\tdeps = [")
-
 
     # Dedupe dependencies here. Sometimes coursier will return "x.y:z:aar:version" and "x.y:z:version" in the
     # same list of dependencies.
@@ -320,18 +306,6 @@ genrule(
     to_return.append("alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n%s)" %
                      (versioned_target_alias_label, target_label, alias_visibility))
 
-    # 11. If using maven_install.json, use a genrule to copy the file from the http_file
-    # repository into this repository.
-    #
-    # genrule(
-    #     name = "org_hamcrest_hamcrest_library_1_3_extension",
-    #     srcs = ["@org_hamcrest_hamcrest_library_1_3//file"],
-    #     outs = ["@maven//:v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3.jar"],
-    #     cmd = "cp $< $@",
-    # )
-    if repository_ctx.attr.maven_install_json:
-        to_return.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
-
     return to_return
 
 # Generate BUILD file with jvm_import and aar_import for each artifact in
@@ -350,6 +324,8 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
     #
     # seen_imports :: string -> bool
     seen_imports = {}
+
+    added_aliases = {}
 
     # A list of versionless target labels for jar artifacts. This is used for
     # generating a compatibility layer for repositories. For example, if we generate
@@ -378,8 +354,6 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
                     seen_imports[artifact_path] = True
                     target_label = escape(strip_packaging_and_classifier_and_version(artifact["coordinates"]))
                     srcjar_paths[target_label] = artifact_path
-                    if repository_ctx.attr.maven_install_json:
-                        all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
 
     # Iterate through the list of artifacts, and generate the target declaration strings.
     for artifact in dependencies:
@@ -401,31 +375,26 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
         elif repository_ctx.attr.fetch_javadoc and get_classifier(artifact["coordinates"]) == "javadoc":
             seen_imports[target_label] = True
             all_imports.append(
-                "filegroup(\n\tname = \"%s\",\n\tsrcs = [\"%s\"],\n\ttags = [\"javadoc\"],\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, artifact_path),
+                "filegroup(\n\tname = \"%s\",\n\tsrcs = [\"%s\"],\n\ttags = [\"javadoc\"],\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, escape(artifact["coordinates"])),
             )
         elif get_packaging(artifact["coordinates"]) in ("exe", "json"):
             seen_imports[target_label] = True
-            versioned_target_alias_label = "%s_extension" % escape(artifact["coordinates"])
-            all_imports.append(
-                "alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, versioned_target_alias_label),
-            )
             if repository_ctx.attr.maven_install_json:
-                all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
+                all_imports.append(
+                    "alias(\n\tname = \"%s\",\n\tactual = \"@%s//file\",\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, escape(artifact["coordinates"])),
+                )
         elif target_label in labels_to_override:
             # Override target labels with the user provided mapping, instead of generating
             # a jvm_import/aar_import based on information in dep_tree.
             seen_imports[target_label] = True
             all_imports.append(
-                "alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n\tvisibility = [\"//visibility:public\"],)" % (target_label, labels_to_override.get(target_label)),
+                "alias(\n\tname = \"%s\",\n\tactual = \"%s\",\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, labels_to_override.get(target_label)),
             )
-            if repository_ctx.attr.maven_install_json:
-                # Provide the downloaded artifact as a file target.
-                all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
             raw_artifact = dict(artifact)
             raw_artifact["coordinates"] = "original_" + artifact["coordinates"]
             raw_artifact["maven_coordinates"] = artifact["coordinates"]
             raw_artifact["out"] = "original_" + artifact["file"]
-
+            raw_artifact["file"] = "@%s//file" % escape(artifact["coordinates"])
             all_imports.extend(_generate_target(
                 repository_ctx,
                 jar_versionless_target_labels,
@@ -440,6 +409,17 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
             ))
 
         elif artifact_path != None:
+            if artifact["file"] not in added_aliases:
+                added_aliases[artifact["file"]] = True
+                repo = escape(artifact["coordinates"])
+                if repository_ctx.attr.maven_install_json:
+                    all_imports.append(
+                        _ARTIFACT_JAR.format(
+                            artifact_path = artifact["file"],
+                            source = "@%s//file" % repo,
+                        ),
+                    )
+
             all_imports.extend(_generate_target(
                 repository_ctx,
                 jar_versionless_target_labels,
