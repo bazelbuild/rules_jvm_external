@@ -83,7 +83,6 @@ use_repo(
     maven,
     "maven_jar_migrator",
     "rules_jvm_external_deps",
-    "unpinned_rules_jvm_external_deps",
 )
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")

@@ -28,7 +28,6 @@ def java_export(
       * `maven_user`: The user name to use when uploading to the maven repository. Can also be set with environment variable `MAVEN_USER`.
       * `maven_password`: The password to use when uploading to the maven repository. Can also be set with environment variable `MAVEN_PASSWORD`.
 
-
     This macro also generates a `name-pom` target that creates the `pom.xml` file
     associated with the artifacts. The template used is derived from the (optional)
     `pom_template` argument, and the following substitutions are performed on
