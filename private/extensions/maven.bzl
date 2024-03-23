@@ -290,6 +290,7 @@ def _maven_impl(mctx):
 
             repo["excluded_artifacts"] = repo.get("excluded_artifacts", []) + install.excluded_artifacts
 
+            _logical_or(repo, "fetch_sources", False, install.fetch_sources)
             _logical_or(repo, "generate_compat_repositories", False, install.generate_compat_repositories)
             _logical_or(repo, "use_starlark_android_rules", False, install.use_starlark_android_rules)
             _logical_or(repo, "ignore_empty_files", False, install.ignore_empty_files)
