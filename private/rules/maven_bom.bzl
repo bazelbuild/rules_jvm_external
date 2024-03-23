@@ -176,7 +176,6 @@ def maven_bom(
     labels = [_label(je) for je in java_exports]
 
     fragments = [l.same_package_label("%s.bom-fragment" % l.name) for l in labels]
-    print("Fragments are: ", fragments)
 
     _maven_bom(
         name = name,
