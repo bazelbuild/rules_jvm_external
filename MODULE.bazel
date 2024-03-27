@@ -21,6 +21,10 @@ bazel_dep(
     version = "1.9.0",
 )
 bazel_dep(
+    name = "rules_android",
+    version = "0.1.1",
+)
+bazel_dep(
     name = "stardoc",
     version = "0.5.6",
     repo_name = "io_bazel_stardoc",
@@ -134,11 +138,6 @@ http_file(
 bazel_dep(
     name = "protobuf",
     version = "21.7",
-    dev_dependency = True,
-)
-bazel_dep(
-    name = "rules_android",
-    version = "0.1.1",
     dev_dependency = True,
 )
 bazel_dep(
