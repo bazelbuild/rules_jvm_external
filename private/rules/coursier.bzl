@@ -54,7 +54,7 @@ bzl_library(
 )
 """
 
-DEFAULT_AAR_IMPORT_LABEL = "@build_bazel_rules_android//android:rules.bzl"
+DEFAULT_AAR_IMPORT_LABEL = "@rules_android//rules:rules.bzl"
 
 _AAR_IMPORT_STATEMENT = """\
 load("%s", "aar_import")
@@ -242,7 +242,9 @@ def _relativize_and_symlink_file_in_maven_local(repository_ctx, absolute_path):
     return artifact_relative_path
 
 def _get_aar_import_statement_or_empty_str(repository_ctx):
-    if repository_ctx.attr.use_starlark_android_rules:
+    # Use the Starlark version of aar_import is requested, or if this version of Bazel
+    # does not have native aar_import.
+    if repository_ctx.attr.use_starlark_android_rules or getattr(native, "aar_import", None) == None:
         # parse the label to validate it
         _ = Label(repository_ctx.attr.aar_import_bzl_label)
         return _AAR_IMPORT_STATEMENT % repository_ctx.attr.aar_import_bzl_label

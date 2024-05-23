@@ -68,12 +68,13 @@ def maven_install(
       use_credentials_from_home_netrc_file: Whether to pass machine login credentials from the ~/.netrc file to coursier.
       fail_if_repin_required: Whether to fail the build if the required maven artifacts have been changed but not repinned. Requires the `maven_install_json` to have been set.
       use_starlark_android_rules: Whether to use the native or Starlark version
-        of the Android rules. Default is False.
+        of the Android rules. Default is False if the running version of Bazel supports native aar_import.
+        If the running version of Bazel does not support native aar_import, this parameter is ignored and the
+        Starlark Android rules is used.
       aar_import_bzl_label: The label (as a string) to use to import aar_import
         from. This is usually needed only if the top-level workspace file does
         not use the typical default repository name to import the Android
-        Starlark rules. Default is
-        "@build_bazel_rules_android//rules:rules.bzl".
+        Starlark rules. Default is "@rules_android//rules:rules.bzl".
       duplicate_version_warning: What to do if an artifact is specified multiple times. If "error" then
         fail the build, if "warn" then print a message and continue, if "none" then do nothing. The default
         is "warn".
@@ -105,6 +106,11 @@ def maven_install(
 
     if additional_netrc_lines and maven_install_json == None:
         fail("`additional_netrc_lines` is only supported with `maven_install_json` specified", "additional_netrc_lines")
+
+    if getattr(native, "aar_import", None) == None:
+      # If this version of bazel does not have the native version of
+      # aar_import, then the Starlark version of aar_import must be used.
+      use_starlark_android_rules = True
 
     # The first coursier_fetch generates the @unpinned_maven
     # repository, which executes Coursier.

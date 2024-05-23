@@ -271,6 +271,9 @@ TESTS=(
 )
 
 function run_tests() {
+  # Remove once https://github.com/bazelbuild/rules_android/issues/219 is fixed
+  echo "common --experimental_google_legacy_api" > .bazelrc
+
   printf "Running bazel run tests:\n"
   for test in ${TESTS[@]}; do
     printf "  ${test} "
