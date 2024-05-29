@@ -41,7 +41,7 @@ remote_android_extensions = use_extension("@bazel_tools//tools/android:android_e
 git_override(
   module_name = "rules_android",
   remote = "https://github.com/bazelbuild/rules_android",
-  commit = "93e27030d3f0defa39cbbc35195638cb772b0c27",
+  commit = "4b4655851417c833cd12797927c36b383e175615",
 )
 
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")

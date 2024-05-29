@@ -538,10 +538,10 @@ maven_install(
 
 # for the above "starlark_aar_import_test" maven_install with
 # use_starlark_android_rules = True
-RULES_ANDROID_COMMIT = "93e27030d3f0defa39cbbc35195638cb772b0c27"
+RULES_ANDROID_COMMIT = "4b4655851417c833cd12797927c36b383e175615"
 http_archive(
     name = "rules_android",
-    sha256 = "71cae2413868a24f17d43fd595af6f3905d2e5b3235f76514f54800bfd90c903",
+    sha256 = "e85023dad876a66d6a7db8b607eeb8fa0876c37fc7920b3e1694953cedd68590",
     strip_prefix = "rules_android-" + RULES_ANDROID_COMMIT,
     urls = ["https://github.com/bazelbuild/rules_android/archive/%s.zip" % RULES_ANDROID_COMMIT],
 )
