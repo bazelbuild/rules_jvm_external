@@ -37,6 +37,12 @@ bazel_dep(
 
 # Remove this once rules_android has rolled out official Bzlmod support
 remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
+# Remove this once rules_android has an updated BCR release.
+git_override(
+  module_name = "rules_android",
+  remote = "https://github.com/bazelbuild/rules_android",
+  commit = "4b4655851417c833cd12797927c36b383e175615",
+)
 
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 

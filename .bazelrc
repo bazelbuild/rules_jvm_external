@@ -7,7 +7,11 @@ build --tool_java_runtime_version=remotejdk_11
 build --experimental_strict_java_deps=strict
 build --explicit_java_test_deps
 
-build --experimental_sibling_repository_layout
+# Re-enable once https://github.com/bazelbuild/rules_go/issues/3947 is addressed.
+#build --experimental_sibling_repository_layout
+
+# Remove once https://github.com/bazelbuild/rules_android/issues/219 is fixed
+build --experimental_google_legacy_api
 
 # Make sure we get something helpful when tests fail
 test --verbose_failures
