@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_android//rules:rules.bzl", "aar_import")
 load(":aar_import_test.bzl", "aar_import_test_suite")
 
 aar_import(
