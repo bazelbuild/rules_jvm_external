@@ -105,3 +105,14 @@ java_test(
         artifact("org.hamcrest:hamcrest"),
     ],
 )
+
+java_library(
+    name = "JarUtils",
+    testonly = 1,
+    srcs = ["JarUtils.java"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        artifact("com.google.guava:guava"),
+        "//private/tools/java/com/github/bazelbuild/rules_jvm_external/zip",
+    ],
+)
