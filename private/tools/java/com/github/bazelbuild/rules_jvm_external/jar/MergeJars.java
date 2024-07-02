@@ -33,15 +33,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -109,7 +110,7 @@ public class MergeJars {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
-    Map<String, Set<String>> allServices = new TreeMap<>();
+    Map<String, List<String>> allServices = new TreeMap<>();
     Set<String> excludedPaths = readExcludedFileNames(excludes);
     Set<String> duplicateExceptions = Set.of("COPYRIGHT", "LICENSE", "NOTICE");
 
@@ -139,10 +140,9 @@ public class MergeJars {
 
           if (entry.getName().startsWith("META-INF/services/") && !entry.isDirectory()) {
             String servicesName = entry.getName().substring("META-INF/services/".length());
-            Set<String> services =
-                allServices.computeIfAbsent(servicesName, key -> new TreeSet<>());
-            String content = new String(ByteStreams.toByteArray(zis));
-            services.addAll(Arrays.asList(content.split("\n")));
+            List<String> services =
+                allServices.computeIfAbsent(servicesName, key -> new ArrayList<>());
+            services.add(new String(ByteStreams.toByteArray(zis)));
             continue;
           }
 
@@ -204,10 +204,12 @@ public class MergeJars {
           jos.closeEntry();
           createdDirectories.add(entry.getName());
         }
-        for (Map.Entry<String, Set<String>> kv : allServices.entrySet()) {
+        for (Map.Entry<String, List<String>> kv : allServices.entrySet()) {
           entry = new StableZipEntry("META-INF/services/" + kv.getKey());
           bos = new ByteArrayOutputStream();
-          bos.write(String.join("\n", kv.getValue()).getBytes());
+
+          bos.write(String.join("\n\n", kv.getValue()).getBytes());
+          bos.write("\n".getBytes());
           entry.setSize(bos.size());
           jos.putNextEntry(entry);
           jos.write(bos.toByteArray());
