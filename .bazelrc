@@ -9,6 +9,11 @@ build --explicit_java_test_deps
 
 build --experimental_sibling_repository_layout
 
+# For rules_android
+# Delete these once https://github.com/bazelbuild/rules_android/issues/219 is resolved.
+common --experimental_google_legacy_api
+common --experimental_enable_android_migration_apis
+
 # Make sure we get something helpful when tests fail
 test --verbose_failures
 test --test_output=errors
