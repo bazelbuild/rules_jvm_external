@@ -1,0 +1,35 @@
+name: Build and deploy tools
+run-name: Build and deploy tools
+on: [push]
+jobs:
+  build-deploy-tools:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+      - name: Refresh prebuilts if transitive deps changed
+        id: refresh-prebuilts
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+            label=$(bazel query "$file" || true)
+            if [[ ! -z $label ]]; then
+              bazel query "kind(java_binary, rdeps(//private/tools/java/..., $label))" >> /tmp/affected_targets.txt
+            fi
+          done
+          affected_targets_count=$(wc -l < /tmp/affected_targets.txt)
+          if [[ $affected_targets_count -gt 0 ]]; then
+            bazelisk build //scripts:refresh-prebuilts
+          fi
+      - name: Upload prebuilts # TODO: Can this be a Create Pull Request action instead?
+        if: steps.refresh-prebuilts.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy jars
+          path: bazel-bin/private/tools/java/com/github/bazelbuild/rules_jvm_external/**/*_deploy.jar
+          retention-days: 5
