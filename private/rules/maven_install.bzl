@@ -129,6 +129,7 @@ def maven_install(
             # created from the maven_install.json file in the coursier_fetch
             # invocation after this.
             name = name if maven_install_json == None else "unpinned_" + name,
+            user_provided_name = name,
             pinned_repo_name = None if maven_install_json == None else name,
             repositories = repositories_json_strings,
             artifacts = artifacts_json_strings,
@@ -161,6 +162,7 @@ def maven_install(
         # Create the repository generated from a maven_install.json file.
         pinned_coursier_fetch(
             name = name,
+            user_provided_name = name,
             resolver = resolver,
             repositories = repositories_json_strings,
             artifacts = artifacts_json_strings,

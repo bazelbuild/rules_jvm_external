@@ -14,13 +14,10 @@ def _jvm_import_impl(ctx):
     if len(ctx.files.jars) != 1:
         fail("Please only specify one jar to import in the jars attribute.")
 
-    # With `bzlmod` enabled, workspace names end up being `~` separated. For the
-    # user-visible workspace name, we need the final part of the name
-    visible_name = ctx.label.workspace_name.rpartition("~")[2]
-    label = "@{workspace_name}//{package}:{name}".format(
+    label = "@{repo}//{package}:{name}".format(
         name = ctx.label.name,
         package = ctx.label.package,
-        workspace_name = visible_name,
+        repo = ctx.attr.user_provided_repo_name,
     )
 
     injar = ctx.files.jars[0]
@@ -99,6 +96,9 @@ jvm_import = rule(
         ),
         "neverlink": attr.bool(
             default = False,
+        ),
+        "user_provided_repo_name": attr.string(
+            mandatory = True,
         ),
         "_add_jar_manifest_entry": attr.label(
             executable = True,

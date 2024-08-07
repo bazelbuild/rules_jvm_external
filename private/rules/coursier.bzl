@@ -1338,7 +1338,7 @@ pinned_coursier_fetch = repository_rule(
     attrs = {
         "_compat_repository": attr.label(default = "//private:compat_repository.bzl"),
         "_outdated": attr.label(default = "//private:outdated.sh"),
-        "user_provided_name": attr.string(),
+        "user_provided_name": attr.string(mandatory = True),
         "resolver": attr.string(doc = "The resolver to use", values = ["coursier", "maven"], default = "coursier"),
         "repositories": attr.string_list(),  # list of repository objects, each as json
         "artifacts": attr.string_list(),  # list of artifact objects, each as json
@@ -1393,7 +1393,7 @@ coursier_fetch = repository_rule(
         "_pin": attr.label(default = "//private:pin.sh"),
         "_compat_repository": attr.label(default = "//private:compat_repository.bzl"),
         "_outdated": attr.label(default = "//private:outdated.sh"),
-        "user_provided_name": attr.string(),
+        "user_provided_name": attr.string(mandatory = True),
         "repositories": attr.string_list(),  # list of repository objects, each as json
         "artifacts": attr.string_list(),  # list of artifact objects, each as json
         "fail_on_missing_checksum": attr.bool(default = True),

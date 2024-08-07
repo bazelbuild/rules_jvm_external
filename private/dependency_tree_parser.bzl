@@ -288,7 +288,29 @@ genrule(
     target_import_string.append("\tvisibility = [%s]," % (",".join(["\"%s\"" % t for t in target_visibilities])))
     alias_visibility = "\tvisibility = [%s],\n" % (",".join(["\"%s\"" % t for t in target_visibilities]))
 
-    # 9. Finish the java_import rule.
+    # 9. Add user-friendly repository name to support diagnostics.
+    #    Only supported by jvm_import.
+    #
+    # java_import(
+    #   name = "org_hamcrest_hamcrest_library",
+    #   jars = ["https/repo1.maven.org/maven2/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3.jar"],
+    #   srcjar = "https/repo1.maven.org/maven2/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3-sources.jar",
+    #   deps = [
+    #           ":org_hamcrest_hamcrest_core",
+    #   ],
+    #   tags = [
+    #       "maven_coordinates=org.hamcrest:hamcrest.library:1.3"],
+    #       "maven_url=https://repo1.maven.org/maven/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+    #       "maven:compile-only",
+    #   ],
+    #   neverlink = True,
+    #   testonly = True,
+    #   visibility = ["//visibility:public"],
+    #   user_provided_repo_name = "maven",
+    if import_rule == "jvm_import":
+        target_import_string.append("\tuser_provided_repo_name = \"%s\"," % repository_ctx.attr.user_provided_name)
+
+    # 10. Finish the java_import rule.
     #
     # java_import(
     # 	name = "org_hamcrest_hamcrest_library",
@@ -309,7 +331,7 @@ genrule(
 
     to_return.append("\n".join(target_import_string))
 
-    # 10. Create a versionless alias target
+    # 11. Create a versionless alias target
     #
     # alias(
     #   name = "org_hamcrest_hamcrest_library_1_3",
@@ -335,7 +357,7 @@ processor_class = "{processor_class}",
             ),
         )
 
-    # 11. If using maven_install.json, use a genrule to copy the file from the http_file
+    # 12. If using maven_install.json, use a genrule to copy the file from the http_file
     # repository into this repository.
     #
     # genrule(
