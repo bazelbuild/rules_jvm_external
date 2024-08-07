@@ -14,13 +14,12 @@
 
 package com.github.bazelbuild.rules_jvm_external.jar;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
-
-import com.github.bazelbuild.rules_jvm_external.zip.StableZipEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,9 +36,13 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
+import static com.github.bazelbuild.rules_jvm_external.JarUtils.createJar;
+import static com.github.bazelbuild.rules_jvm_external.JarUtils.readJar;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class MergeJarsTest {
 
@@ -551,39 +554,6 @@ public class MergeJarsTest {
       assertFalse(
           jar.getManifest().getMainAttributes().containsKey(new Attributes.Name("Target-Label")));
     }
-  }
-
-  private void createJar(Path outputTo, Map<String, String> pathToContents) throws IOException {
-    try (OutputStream os = Files.newOutputStream(outputTo);
-        ZipOutputStream zos = new ZipOutputStream(os)) {
-
-      for (Map.Entry<String, String> entry : pathToContents.entrySet()) {
-        ZipEntry ze = new StableZipEntry(entry.getKey());
-        zos.putNextEntry(ze);
-        if (!ze.isDirectory()) {
-          zos.write(entry.getValue().getBytes(UTF_8));
-        }
-        zos.closeEntry();
-      }
-    }
-  }
-
-  private Map<String, String> readJar(Path jar) throws IOException {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-
-    try (InputStream is = Files.newInputStream(jar);
-        ZipInputStream zis = new ZipInputStream(is)) {
-
-      for (ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
-        if (entry.isDirectory()) {
-          continue;
-        }
-
-        builder.put(entry.getName(), new String(ByteStreams.toByteArray(zis), UTF_8));
-      }
-    }
-
-    return builder.build();
   }
 
   private Map<String, Long> readJarTimeStamps(Path jar) throws IOException {

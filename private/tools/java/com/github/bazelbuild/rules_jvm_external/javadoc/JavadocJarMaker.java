@@ -58,6 +58,7 @@ public class JavadocJarMaker {
 
   public static void main(String[] args) throws IOException {
     Set<Path> sourceJars = new HashSet<>();
+    Set<Path> resources = new HashSet<>();
     Path out = null;
     Path elementList = null;
     Set<Path> classpath = new HashSet<>();
@@ -86,6 +87,11 @@ public class JavadocJarMaker {
         case "--element-list":
           next = args[++i];
           elementList = Paths.get(next);
+          break;
+
+        case "--resources":
+          next = args[++i];
+          resources.add(Paths.get(next));
           break;
 
         default:
@@ -175,6 +181,12 @@ public class JavadocJarMaker {
       options.addAll(Arrays.asList("-d", outputTo.toAbsolutePath().toString()));
 
       sources.forEach(obj -> options.add(obj.getName()));
+
+      for (Path resource : resources) {
+        Path target = outputTo.resolve(resource.getFileName());
+        Files.createDirectories(target.getParent());
+        Files.copy(resource, target);
+      }
 
       Writer writer = new StringWriter();
       DocumentationTool.DocumentationTask task =
