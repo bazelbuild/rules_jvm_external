@@ -553,6 +553,103 @@ public class MergeJarsTest {
     }
   }
 
+  @Test
+  public void mergedJarKeepsNonClassFiles() throws IOException {
+    Path inputOne = temp.newFile("one.jar").toPath();
+    createJar(
+        inputOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR,stdout")
+    );
+
+    Path excludeOne = temp.newFile("two.jar").toPath();
+    createJar(
+        excludeOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR")
+    );
+
+    Path outputJar = temp.newFile("out.jar").toPath();
+
+    MergeJars.main(
+        new String[] {
+            "--output", outputJar.toAbsolutePath().toString(),
+            "--sources", inputOne.toAbsolutePath().toString(),
+            "--exclude", excludeOne.toAbsolutePath().toString(),
+        });
+
+    Map<String, String> contents = readJar(outputJar);
+
+    assertEquals("log4j.rootLogger=ERROR,stdout", contents.get("log4j.properties"));
+  }
+
+  @Test
+  public void mergedJarKeepsNonClassFilesDefaultDuplicateStrategy() throws IOException {
+    Path inputOne = temp.newFile("one.jar").toPath();
+    createJar(
+        inputOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR,stdout")
+    );
+    Path inputTwo = temp.newFile("two.jar").toPath();
+    createJar(
+        inputTwo,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR,stdout,stderr")
+    );
+
+    Path excludeOne = temp.newFile("three.jar").toPath();
+    createJar(
+        excludeOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR")
+    );
+
+    Path outputJar = temp.newFile("out.jar").toPath();
+
+    MergeJars.main(
+        new String[] {
+            "--output", outputJar.toAbsolutePath().toString(),
+            "--sources", inputOne.toAbsolutePath().toString(),
+            "--sources", inputTwo.toAbsolutePath().toString(),
+            "--exclude", excludeOne.toAbsolutePath().toString(),
+        });
+
+    Map<String, String> contents = readJar(outputJar);
+
+    assertEquals("log4j.rootLogger=ERROR,stdout,stderr", contents.get("log4j.properties"));
+  }
+
+  @Test
+  public void mergedJarKeepsNonClassFilesFirstWinsStrategy() throws IOException {
+    Path inputOne = temp.newFile("one.jar").toPath();
+    createJar(
+        inputOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR,stdout")
+    );
+    Path inputTwo = temp.newFile("two.jar").toPath();
+    createJar(
+        inputTwo,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR,stdout,stderr")
+    );
+
+    Path excludeOne = temp.newFile("three.jar").toPath();
+    createJar(
+        excludeOne,
+        ImmutableMap.of("log4j.properties", "log4j.rootLogger=ERROR")
+    );
+
+    Path outputJar = temp.newFile("out.jar").toPath();
+
+    MergeJars.main(
+        new String[] {
+            "--output", outputJar.toAbsolutePath().toString(),
+            "--sources", inputOne.toAbsolutePath().toString(),
+            "--sources", inputTwo.toAbsolutePath().toString(),
+            "--duplicates", "first-wins",
+            "--exclude", excludeOne.toAbsolutePath().toString(),
+        });
+
+    Map<String, String> contents = readJar(outputJar);
+
+    assertEquals("log4j.rootLogger=ERROR,stdout", contents.get("log4j.properties"));
+  }
+
   private void createJar(Path outputTo, Map<String, String> pathToContents) throws IOException {
     try (OutputStream os = Files.newOutputStream(outputTo);
         ZipOutputStream zos = new ZipOutputStream(os)) {

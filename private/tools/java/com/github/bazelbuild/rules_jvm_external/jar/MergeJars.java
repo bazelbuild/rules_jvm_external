@@ -110,8 +110,7 @@ public class MergeJars {
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
 
     Map<String, Set<String>> allServices = new TreeMap<>();
-    Set<String> excludedPaths = readExcludedFileNames(excludes);
-    Set<String> duplicateExceptions = Set.of("COPYRIGHT", "LICENSE", "NOTICE");
+    Set<String> excludedPaths = readExcludedClassNames(excludes);
 
     // Ultimately, we want the entries in the output zip to be sorted
     // so that we have a deterministic output.
@@ -132,7 +131,6 @@ public class MergeJars {
 
           if ("META-INF/".equals(entry.getName())
               || (!entry.getName().startsWith("META-INF/")
-                  && !duplicateExceptions.contains(entry.getName())
                   && excludedPaths.contains(entry.getName()))) {
             continue;
           }
@@ -295,7 +293,7 @@ public class MergeJars {
     }
   }
 
-  private static Set<String> readExcludedFileNames(Set<Path> excludes) throws IOException {
+  private static Set<String> readExcludedClassNames(Set<Path> excludes) throws IOException {
     Set<String> paths = new HashSet<>();
 
     for (Path exclude : excludes) {
@@ -305,6 +303,9 @@ public class MergeJars {
         ZipEntry entry;
         while ((entry = jis.getNextEntry()) != null) {
           if (entry.isDirectory()) {
+            continue;
+          }
+          if (!entry.getName().endsWith(".class")) {
             continue;
           }
 
