@@ -154,10 +154,6 @@ public class JavadocJarMaker {
       }
       Version version = Version.parse(System.getProperty("java.version"));
 
-      options.addAll(
-          Arrays.asList(
-              "-notimestamp", "-use", "-quiet", "-Xdoclint:-missing", "-encoding", "UTF8"));
-
       // Generate frames if we can. Java prior to v9 generates frames automatically.
       // In Java 13, the flag was removed.
       if (version.compareTo(JAVA_9) > 0 && version.compareTo(JAVA_13) < 0) {
