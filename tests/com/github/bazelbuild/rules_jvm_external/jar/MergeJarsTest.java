@@ -553,6 +553,39 @@ public class MergeJarsTest {
     }
   }
 
+  @Test
+  public void mergedJarServiceProviderFilePreservesComments() throws IOException {
+    Path inputOne = temp.newFile("one.jar").toPath();
+    String inputOneContents = "# This is a comment\n# This is another comment\ncom.example.Foo";
+    createJar(
+        inputOne,
+        ImmutableMap.of("META-INF/services/com.example.ServiceProvider", inputOneContents)
+    );
+
+    Path inputTwo = temp.newFile("two.jar").toPath();
+    String inputTwoContents = "# My License\ncom.example.Bar";
+    createJar(
+        inputTwo,
+        ImmutableMap.of("META-INF/services/com.example.ServiceProvider", inputTwoContents)
+    );
+
+    Path outputJar = temp.newFile("out.jar").toPath();
+
+    MergeJars.main(
+        new String[] {
+            "--output", outputJar.toAbsolutePath().toString(),
+            "--sources", inputOne.toAbsolutePath().toString(),
+            "--sources", inputTwo.toAbsolutePath().toString(),
+        }
+    );
+
+    Map<String, String> contents = readJar(outputJar);
+
+    String expected = String.join("\n\n", inputOneContents, inputTwoContents) + "\n";
+
+    assertEquals(expected, contents.get("META-INF/services/com.example.ServiceProvider"));
+  }
+
   private void createJar(Path outputTo, Map<String, String> pathToContents) throws IOException {
     try (OutputStream os = Files.newOutputStream(outputTo);
         ZipOutputStream zos = new ZipOutputStream(os)) {
