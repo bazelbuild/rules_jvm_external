@@ -922,3 +922,16 @@ maven_install(
 load("@maven_resolved_with_boms//:defs.bzl", _maven_resolved_maven_install = "pinned_maven_install")
 
 _maven_resolved_maven_install()
+
+# https://github.com/bazelbuild/rules_jvm_external/issues/1206
+maven_install(
+    name = "transitive_dependency_with_type_of_pom",
+    # an arbitrary artifact which depends on org.javamoney:moneta:pom
+    artifacts = [
+        # https://github.com/quarkiverse/quarkus-moneta/blob/2.0.0/runtime/pom.xml#L16-L21
+        "io.quarkiverse.moneta:quarkus-moneta:2.0.0",
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)

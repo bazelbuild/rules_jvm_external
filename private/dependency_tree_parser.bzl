@@ -404,6 +404,7 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
         if skip_maven_local_dependencies and is_maven_local_path(artifact_path):
             continue
         simple_coord = strip_packaging_and_classifier_and_version(artifact["coordinates"])
+        packaging = get_packaging(artifact["coordinates"])
         target_label = escape(simple_coord)
         alias_visibility = ""
 
@@ -418,7 +419,7 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
             all_imports.append(
                 "filegroup(\n\tname = \"%s\",\n\tsrcs = [\"%s\"],\n\ttags = [\"javadoc\"],\n\tvisibility = [\"//visibility:public\"],\n)" % (target_label, artifact_path),
             )
-        elif get_packaging(artifact["coordinates"]) in ("exe", "json"):
+        elif packaging in ("exe", "json"):
             seen_imports[target_label] = True
             versioned_target_alias_label = "%s_extension" % escape(artifact["coordinates"])
             all_imports.append(
@@ -454,7 +455,7 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
                 raw_artifact,
             ))
 
-        elif artifact_path != None:
+        elif artifact_path != None and packaging != "pom":
             seen_imports[target_label] = True
             all_imports.extend(_generate_target(
                 repository_ctx,
@@ -468,7 +469,7 @@ def _generate_imports(repository_ctx, dependencies, explicit_artifacts, neverlin
                 default_visibilities,
                 artifact,
             ))
-        else:  # artifact_path == None:
+        else:  # artifact_path == None or packaging == "pom":
             # Special case for certain artifacts that only come with a POM file.
             # Such artifacts "aggregate" their dependencies, so they don't have
             # a JAR for download.

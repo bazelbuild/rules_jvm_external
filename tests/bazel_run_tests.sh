@@ -251,6 +251,14 @@ function test_maven_resolution() {
     bazel run @maven_resolved_with_boms//:pin >> "$TEST_LOG" 2>&1
 }
 
+function test_transitive_dependency_with_type_of_pom {
+  # transitive_dependency_with_type_of_pom installs an artifact which depends on
+  # org.javamoney:moneta:pom, which should expand into the transitive
+  # dependencies of that type=pom artifact, such as
+  # org.javamoney.moneta:moneta-core
+  bazel query @transitive_dependency_with_type_of_pom//:org_javamoney_moneta_moneta_core >> "$TEST_LOG" 2>&1
+}
+
 TESTS=(
   "test_maven_resolution"
   "test_dependency_aggregation"
@@ -268,6 +276,7 @@ TESTS=(
   "test_unpinned_found_artifact_with_plus_through_pin_and_build"
   "test_v1_lock_file_format"
   "test_dependency_pom_exclusion"
+  "test_transitive_dependency_with_type_of_pom"
 )
 
 function run_tests() {
