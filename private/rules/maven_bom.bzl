@@ -41,7 +41,7 @@ def _maven_bom_impl(ctx):
     bom = generate_pom(
         ctx,
         coordinates = coordinates,
-        versioned_dep_coordinates = [f[MavenBomFragmentInfo].coordinates for f in ctx.attr.fragments],
+        versioned_dep_coordinates = [unpack_coordinates(f[MavenBomFragmentInfo].coordinates) for f in ctx.attr.fragments],
         pom_template = ctx.file.pom_template,
         out_name = "%s.xml" % ctx.label.name,
     )
@@ -77,13 +77,22 @@ def _maven_dependencies_bom_impl(ctx):
     # included in the main BOM
     first_order_deps = [f[MavenBomFragmentInfo].coordinates for f in ctx.attr.fragments]
     all_deps = depset(transitive = [f.maven_info.maven_deps for f in fragments]).to_list()
-    combined_deps = [a for a in all_deps if a not in first_order_deps]
+    combined_deps = [unpack_coordinates(a) for a in all_deps if a not in first_order_deps]
 
     unpacked = unpack_coordinates(ctx.attr.bom_coordinates)
+    unpacked = struct(
+        groupId = unpacked.groupId,
+        artifactId = unpacked.artifactId,
+        type = "pom",
+        scope = "import",
+        classifier = unpacked.classifier,
+        version = unpacked.version,
+    )
+
     dependencies_bom = generate_pom(
         ctx,
         coordinates = ctx.attr.maven_coordinates,
-        versioned_dep_coordinates = combined_deps + ["%s:%s:pom:import:%s" % (unpacked.groupId, unpacked.artifactId, unpacked.version)],
+        versioned_dep_coordinates = combined_deps + [unpacked],
         pom_template = ctx.file.pom_template,
         out_name = "%s.xml" % ctx.label.name,
         indent = 12,

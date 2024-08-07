@@ -1,10 +1,10 @@
 def unpack_coordinates(coords):
     """Takes a maven coordinate and unpacks it into a struct with fields
-    `groupId`, `artifactId`, `version`, `type`, `scope`
+    `groupId`, `artifactId`, `version`, `type`, `classifier`
     where type and scope are optional.
 
     Assumes following maven coordinate syntax:
-    groupId:artifactId[:type[:scope]]:version
+    groupId:artifactId[:type[:classifier]]:version
     """
     if not coords:
         return None
@@ -18,6 +18,7 @@ def unpack_coordinates(coords):
             artifactId = parts[1],
             type = None,
             scope = None,
+            classifier = None,
             version = None,
         )
 
@@ -30,7 +31,8 @@ def unpack_coordinates(coords):
         groupId = parts.get(0),
         artifactId = parts.get(1),
         type = parts.get(2),
-        scope = parts.get(3),
+        scope = None,
+        classifier = parts.get(3),
         version = version,
     )
 
@@ -70,6 +72,12 @@ def format_dep(unpacked, indent = 8, include_version = True):
             "    <scope>%s</scope>\n" % unpacked.scope,
         ])
 
+    if unpacked.classifier:
+        dependency.extend([
+            whitespace,
+            "    <classifier>%s</classifier>\n" % unpacked.classifier,
+        ])
+
     dependency.extend([
         whitespace,
         "</dependency>",
@@ -93,6 +101,7 @@ def generate_pom(
         "{artifactId}": unpacked_coordinates.artifactId,
         "{version}": unpacked_coordinates.version,
         "{type}": unpacked_coordinates.type or "jar",
+        "{classifier}": unpacked_coordinates.classifier or "",
         "{scope}": unpacked_coordinates.scope or "compile",
     }
 
@@ -112,16 +121,16 @@ def generate_pom(
         substitutions.update({"{parent}": "".join(parts)})
 
     deps = []
-    for dep in sorted(versioned_dep_coordinates) + sorted(unversioned_dep_coordinates):
+    for dep in _sort_unpacked(versioned_dep_coordinates) + _sort_unpacked(unversioned_dep_coordinates):
         include_version = dep in versioned_dep_coordinates
-        unpacked = unpack_coordinates(dep)
-        new_scope = "runtime" if dep in runtime_deps else unpacked.scope
+        new_scope = "runtime" if dep in runtime_deps else dep.scope
         unpacked = struct(
-            groupId = unpacked.groupId,
-            artifactId = unpacked.artifactId,
-            type = unpacked.type,
+            groupId = dep.groupId,
+            artifactId = dep.artifactId,
+            type = dep.type,
             scope = new_scope,
-            version = unpacked.version,
+            classifier = dep.classifier,
+            version = dep.version,
         )
         deps.append(format_dep(unpacked, indent = indent, include_version = include_version))
 
@@ -156,3 +165,11 @@ def determine_additional_dependencies(jar_files, additional_dependencies):
                     to_return.append(dep)
 
     return to_return
+
+def _sort_unpacked(unpacked_dep):
+    """Sorts a list of unpacked dependencies by groupId, artifactId, and version."""
+
+    def _sort_key(dep):
+        return (dep.groupId, dep.artifactId, dep.version)
+
+    return sorted(unpacked_dep, key = _sort_key)

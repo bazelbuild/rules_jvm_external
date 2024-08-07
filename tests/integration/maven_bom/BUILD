@@ -37,6 +37,10 @@ java_export(
     name = "one-dep",
     srcs = ["OneDep.java"],
     maven_coordinates = "com.example:one-dep:1.0.0",
+    visibility = [
+        ":__pkg__",
+        "//tests/integration/pom_file:__pkg__",
+    ],
     deps = [
         artifact("com.google.guava:guava"),
     ],
