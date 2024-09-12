@@ -39,6 +39,7 @@ def _genrule_copy_artifact_from_http_file(artifact, visibilities):
         "genrule(",
         "     name = \"%s_extension\"," % http_file_repository,
         "     srcs = [\"@%s//file\"]," % http_file_repository,
+        "     tags = [\"no-remote-cache\"],",
         "     outs = [\"%s\"]," % file,
         "     cmd = \"cp $< $@\",",
     ]
@@ -207,6 +208,7 @@ genrule(
 
     coordinates = artifact.get("maven_coordinates", artifact["coordinates"])
     target_import_string.append("\ttags = [")
+    target_import_string.append("\t\t\"no-remote-cache\",")
     target_import_string.append("\t\t\"maven_coordinates=%s\"," % coordinates)
     if len(artifact["urls"]):
         target_import_string.append("\t\t\"maven_url=%s\"," % artifact["urls"][0])
