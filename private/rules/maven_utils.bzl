@@ -41,6 +41,12 @@ def format_dep(unpacked, indent = 8, include_version = True):
             "    <scope>%s</scope>\n" % unpacked.scope,
         ])
 
+    if unpacked.classifier:
+        dependency.extend([
+            whitespace,
+            "    <classifier>%s</classifier>\n" % unpacked.classifier,
+        ])
+
     dependency.extend([
         whitespace,
         "</dependency>",
@@ -64,6 +70,7 @@ def generate_pom(
         "{artifactId}": unpacked_coordinates.artifactId,
         "{version}": unpacked_coordinates.version,
         "{type}": unpacked_coordinates.type or "jar",
+        "{classifier}": unpacked_coordinates.classifier or "",
         "{scope}": unpacked_coordinates.scope or "compile",
     }
 
@@ -85,13 +92,20 @@ def generate_pom(
     deps = []
     for dep in sorted(versioned_dep_coordinates) + sorted(unversioned_dep_coordinates):
         include_version = dep in versioned_dep_coordinates
-        unpacked = _unpack_coordinates(dep)
+        split = dep.split(":")
+        if len(split) == 5 and split[3] not in ["import", "compile", "runtime", "test", "provided", "system"]:
+            print(split)
+            gradle_format = split[0] + ":" + split[1] + ":" + split[4] + ":" + split[3] + "@" + split[2]
+            unpacked = _unpack_coordinates(gradle_format)
+        else:
+            unpacked = _unpack_coordinates(dep)
         new_scope = "runtime" if dep in runtime_deps else unpacked.scope
         unpacked = struct(
             groupId = unpacked.groupId,
             artifactId = unpacked.artifactId,
             type = unpacked.type,
             scope = new_scope,
+            classifier = unpacked.classifier,
             version = unpacked.version,
         )
         deps.append(format_dep(unpacked, indent = indent, include_version = include_version))

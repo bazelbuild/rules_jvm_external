@@ -172,6 +172,7 @@ dev_maven.install(
     artifacts = [
         "com.google.guava:guava:31.1-jre",
         "org.hamcrest:hamcrest-core:2.1",
+        "io.netty:netty-tcnative-boringssl-static:2.0.61.Final",
     ],
     lock_file = "@rules_jvm_external//:maven_install.json",
     resolver = "coursier",

@@ -5,7 +5,7 @@ def unpack_coordinates(coords):
 
     Assumes `coords` is in one of the following syntaxes:
      * groupId:artifactId[:type[:scope]]:version
-     * groupId:artifactId[:version][@classifier][:type]
+     * groupId:artifactId[:version][:classifier][@type]
     """
     if not coords:
         return None

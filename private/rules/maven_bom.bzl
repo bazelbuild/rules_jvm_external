@@ -72,6 +72,7 @@ def _maven_dependencies_bom_impl(ctx):
     combined_deps = [a for a in all_deps if a not in first_order_deps]
 
     unpacked = unpack_coordinates(ctx.attr.bom_coordinates)
+
     dependencies_bom = generate_pom(
         ctx,
         coordinates = ctx.attr.maven_coordinates,
