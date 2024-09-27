@@ -1175,21 +1175,6 @@ java_export(
 )
 ```
 
-If you wish to publish an artifact with Kotlin source code to a maven repository
-you can use `kt_jvm_export`. This rule has the same arguments and generated
-rules as `java_export`, but uses `kt_jvm_library` instead of `java_library`.
-
-```python
-# user_project/BUILD
-load("@rules_jvm_external//:kt_defs.bzl", "kt_jvm_export")
-
-kt_jvm_export(
-  name = "exported_kt_lib",
-  maven_coordinates = "com.example:project:0.0.1",
-  srcs = glob(["*.kt"]),
-)
-```
-
 In order to publish the artifact, use `bazel run`:
 
 `bazel run --define "maven_repo=file://$HOME/.m2/repository" //user_project:exported_lib.publish`
@@ -1217,6 +1202,38 @@ Or, to publish to a GCP Artifact Registry:
 
 When using the `gpg_sign` option, the current default key will be used for
 signing, and the `gpg` binary needs to be installed on the machine.
+
+### Kotlin Publish
+If you wish to publish an artifact with Kotlin source code to a maven repository
+you can use `kt_jvm_export`. This rule has the same arguments and generated
+rules as `java_export`, but uses `kt_jvm_library` instead of `java_library`.
+
+```python
+# user_project/BUILD
+load("@rules_jvm_external//:kt_defs.bzl", "kt_jvm_export")
+
+kt_jvm_export(
+  name = "exported_kt_lib",
+  maven_coordinates = "com.example:project:0.0.1",
+  srcs = glob(["*.kt"]),
+)
+```
+
+### Scala Publish
+If you wish to publish an artifact with Scala source code to a maven repository
+you can use `scala_export`. This rule has the same arguments and generated
+rules as `java_export`, but uses `scala_library` instead of `java_library`.
+
+```python
+# user_project/BUILD
+load("@rules_jvm_external//:scala_defs.bzl", "scala_export")
+
+scala_export(
+  name = "exported_scala_lib",
+  maven_coordinates = "com.example:project:0.0.1",
+  srcs = glob(["*.scala"]),
+)
+```
 
 ## Configuring the dependency resolver
 
