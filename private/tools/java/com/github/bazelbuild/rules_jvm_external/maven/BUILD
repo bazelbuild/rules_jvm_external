@@ -42,6 +42,14 @@ java_binary(
             "org.bouncycastle:bcpg-jdk15on",
             repository_name = "rules_jvm_external_deps",
         ),
+        artifact(
+            "com.google.http-client:google-http-client",
+            repository_name = "rules_jvm_external_deps",
+        ),
+        artifact(
+            "org.apache.maven:maven-repository-metadata",
+            repository_name = "rules_jvm_external_deps",
+        ),
     ],
 )
 
@@ -56,4 +64,21 @@ java_binary(
             repository_name = "rules_jvm_external_deps",
         ),
     ],
+)
+
+java_test(
+    name = "MavenPublisherTest",
+    srcs = [
+        "MavenPublisherTest.java",
+    ],
+    deps = [
+        artifact(
+            "org.apache.maven:maven-repository-metadata",
+            repository_name = "rules_jvm_external_deps",
+        ),
+        artifact(
+            "junit:junit",
+            repository_name = "regression_testing_coursier",
+        ),
+    ]
 )
