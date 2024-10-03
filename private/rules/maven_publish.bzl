@@ -18,7 +18,7 @@ export USE_IN_MEMORY_PGP_KEYS="${{USE_IN_MEMORY_PGP_KEYS:-{use_in_memory_pgp_key
 export PGP_SIGNING_KEY="${{PGP_SIGNING_KEY:-{pgp_signing_key}}}"
 export PGP_SIGNING_PWD="${{PGP_SIGNING_PWD:-{pgp_signing_pwd}}}"
 echo Uploading "{coordinates}" to "${{MAVEN_REPO}}"
-{uploader} "{coordinates}" '{pom}' '{artifact}' '{classifier_artifacts}' $@
+{uploader} "{coordinates}" '{pom}' '{artifact}' '{publish_maven_metadata}' '{classifier_artifacts}' $@
 """
 
 def _escape_arg(str):
@@ -68,6 +68,7 @@ def _maven_publish_impl(ctx):
             pom = ctx.file.pom.short_path,
             artifact = artifacts_short_path,
             classifier_artifacts = ",".join(["{}={}".format(classifier, file.short_path) for (classifier, file) in classifier_artifacts_dict.items()]),
+            publish_maven_metadata = ctx.attr.publish_maven_metadata,
         ),
     )
 
@@ -125,6 +126,10 @@ When signing with GPG, the current default key is used.
             allow_single_file = True,
         ),
         "classifier_artifacts": attr.label_keyed_string_dict(allow_files = True),
+        "publish_maven_metadata": attr.bool(
+            default = False,
+            doc = "Whether to publish a maven-metadata.xml to the Maven repository",
+        ),
         "_uploader": attr.label(
             executable = True,
             cfg = "exec",
