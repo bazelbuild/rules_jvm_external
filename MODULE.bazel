@@ -6,7 +6,7 @@ module(
 
 bazel_dep(
     name = "rules_android",
-    version = "0.1.1",
+    version = "0.2.0",
 )
 bazel_dep(
     name = "bazel_features",
@@ -40,8 +40,15 @@ bazel_dep(
     repo_name = "io_bazel_stardoc",
 )
 
+# Use a more recent rules_android
+git_override(
+    module_name = "rules_android",
+    remote = "https://github.com/bazelbuild/rules_android.git",
+    commit = "1124b494b30b5626c934a6644ac8236cdcd34645",
+)
+
 # Remove this once rules_android has rolled out official Bzlmod support
-remote_android_extensions = use_extension("@bazel_tools//tools/android:android_extensions.bzl", "remote_android_tools_extensions")
+remote_android_extensions = use_extension("@rules_android//bzlmod_extensions:android_extensions.bzl", "remote_android_tools_extensions")
 use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
 
 maven = use_extension(":extensions.bzl", "maven")
