@@ -118,7 +118,8 @@ def maven_bom(
         dependencies_pom_template = None,
         tags = None,
         testonly = None,
-        visibility = None):
+        visibility = None,
+        toolchains = []):
     """Generates a Maven BOM `pom.xml` file and an optional "dependencies" `pom.xml`.
 
     The generated BOM will contain a list of all the coordinates of the
@@ -186,6 +187,7 @@ def maven_bom(
         tags = tags,
         testonly = testonly,
         visibility = visibility,
+        toolchains = toolchains,
     )
 
     maven_publish(
@@ -195,6 +197,7 @@ def maven_bom(
         tags = tags,
         testonly = testonly,
         visibility = visibility,
+        toolchains = toolchains,
     )
 
     if dependencies_maven_coordinates:
@@ -207,6 +210,7 @@ def maven_bom(
             tags = tags,
             testonly = testonly,
             visibility = visibility,
+            toolchains = toolchains,
         )
 
         maven_publish(
@@ -216,4 +220,5 @@ def maven_bom(
             tags = tags,
             testonly = testonly,
             visibility = visibility,
+            toolchains = toolchains,
         )
