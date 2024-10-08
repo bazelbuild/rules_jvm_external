@@ -2,7 +2,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(":java_export.bzl", "maven_export")
 load(":maven_project_jar.bzl", "DEFAULT_EXCLUDED_WORKSPACES")
 
-KOTLIN_STDLIB = "@rules_kotlin//kotlin/compiler:kotlin-stdlib"
+KOTLIN_STDLIB = Label("@rules_kotlin//kotlin/compiler:kotlin-stdlib")
 
 def kt_jvm_export(
         name,
