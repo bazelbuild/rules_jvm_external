@@ -177,7 +177,7 @@ If you are using `bzlmod`, define an `install` tag in your root
 maven.install(
     name = "rules_jvm_external_deps",
     repositories = ["https://mycorp.com/artifacts"],
-    lock_file = "@//:rules_jvm_external_deps_install.json",
+    lock_file = "//:rules_jvm_external_deps_install.json",
 )
 ```
 
@@ -378,8 +378,8 @@ maven.install(
         "org.seleniumhq.selenium:selenium-java",
     ],
     # The `maven` resolver requires a lock file, though this can be an empty file before pinning
-    lock_file = "@//:manifest_install.json",
-)    
+    lock_file = "//:manifest_install.json",
+)
 ```
 
 ## Generated targets
