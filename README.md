@@ -36,7 +36,7 @@ Find other GitHub projects using `rules_jvm_external`
 
 **Compatibility guideline:** This project aims to be backwards compatible with
 the (current LTS - 2) version. If the current LTS version is 9, then we aim to
-support versions 7, 8 and 9. 
+support versions 7, 8 and 9.
 
 The project will only support the last release of non-LTS releases. That is, if
 the current LTS version is 9, then only Bazel 7.7.1 would be supported of the 7.x
@@ -559,7 +559,7 @@ If you want to mark certain artifacts as compile-only dependencies, use the
 maven.amend_artifact(
     coordinates = "com.squareup:javapoet",
     neverlink = "true",
-)    
+)
 ```
 
 This instructs `rules_jvm_external` to mark the generated target for
@@ -715,9 +715,9 @@ target relative to your main workspace, instead of the `@maven` workspace.
 The dependency that has been overridden is made available prefixed with
 `original_`. That is, in the example above, the version of Guava that was
 resolved could be accessed as `@maven//:original_com_google_guava_guava`.
-The primary use case this is designed to support is to allow specific 
-targets to have additional dependencies added (eg. to ensure a default 
-implementation of key interfaces are available on the classpath without 
+The primary use case this is designed to support is to allow specific
+targets to have additional dependencies added (eg. to ensure a default
+implementation of key interfaces are available on the classpath without
 needing to modify every target)
 
 ### Proxies
@@ -1102,7 +1102,6 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/21.4.7075529"
 
 You can add the `export ANDROID_HOME` to your `.zshrc` or similar
 config file.
-
 
 ### Generating documentation
 
