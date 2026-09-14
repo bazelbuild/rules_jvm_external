@@ -29,13 +29,6 @@ TagsInfo = provider(
     },
 )
 
-PackageMetadataInfoCollectionInfo = provider(
-    doc = "Provider to propagate jvm_import's applicable_licenses for testing purposes",
-    fields = {
-        "info": "A PackageMetadataInfo provider from jvm_import's applicable_licenses for testing purposes",
-    },
-)
-
 def _tags_propagator_impl(target, ctx):
     tags = getattr(ctx.rule.attr, "tags")
     return TagsInfo(tags = tags)
@@ -44,6 +37,13 @@ tags_propagator = aspect(
     doc = "Aspect that propagates tags to help with testing jvm_import",
     attr_aspects = ["deps"],
     implementation = _tags_propagator_impl,
+)
+
+PackageMetadataInfoCollectionInfo = provider(
+    doc = "Provider to propagate jvm_import's applicable_licenses for testing purposes",
+    fields = {
+        "info": "A PackageMetadataInfo provider from jvm_import's applicable_licenses for testing purposes",
+    },
 )
 
 def _package_metadata_info_propagator_impl(target, ctx):
@@ -70,6 +70,26 @@ package_metadata_info_propagator = aspect(
     implementation = _package_metadata_info_propagator_impl,
 )
 
+DepsInfo = provider(
+    doc = "Provider to propagate jvm_import's deps for testing purposes",
+    fields = {
+        "deps": "deps to be propagated for jvm_import's tests",
+    },
+)
+
+def _deps_propagator_impl(target, ctx):
+    raw_deps = getattr(ctx.rule.attr, "deps")
+    deps = []
+    for dep in raw_deps:
+        deps.append(str(dep.label))
+    return DepsInfo(deps = deps)
+
+deps_propagator = aspect(
+    doc = "Aspect that propagates deps to help with testing jvm_import",
+    attr_aspects = ["deps"],
+    implementation = _deps_propagator_impl,
+)
+
 def _does_jvm_import_have_tags_impl(ctx):
     env = analysistest.begin(ctx)
 
@@ -89,6 +109,40 @@ does_jvm_import_have_tags_test = analysistest.make(
         "src": attr.label(
             doc = "Target to traverse for tags",
             aspects = [tags_propagator],
+            mandatory = True,
+        ),
+    },
+)
+
+def _does_jvm_import_exclude_exclusions_in_deps_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    expected_tags = [
+        "maven_coordinates=com.google.guava:guava:31.1-jre",
+        "maven_exclusion=com.google.errorprone:error_prone_annotations",
+        "maven_repository=https://repo1.maven.org/maven2",
+        "maven_sha256=a42edc9cab792e39fe39bb94f3fca655ed157ff87a8af78e1d6ba5b07c4a00ab",
+        "maven_url=https://repo1.maven.org/maven2/com/google/guava/guava/31.1-jre/guava-31.1-jre.jar",
+    ]
+
+    asserts.equals(env, expected_tags, ctx.attr.src[TagsInfo].tags)
+
+    expected_deps = [
+        "@@_main~maven~pom_exclusion_testing_coursier//:com_google_code_findbugs_jsr305",
+        "@@_main~maven~pom_exclusion_testing_coursier//:com_google_guava_failureaccess",
+        "@@_main~maven~pom_exclusion_testing_coursier//:com_google_guava_listenablefuture",
+        "@@_main~maven~pom_exclusion_testing_coursier//:com_google_j2objc_j2objc_annotations",
+        "@@_main~maven~pom_exclusion_testing_coursier//:org_checkerframework_checker_qual",
+    ]
+    asserts.equals(env, expected_deps, ctx.attr.src[DepsInfo].deps)
+    return analysistest.end(env)
+
+does_jvm_import_exclude_exclusions_in_deps_test = analysistest.make(
+    _does_jvm_import_exclude_exclusions_in_deps_test_impl,
+    attrs = {
+        "src": attr.label(
+            doc = "Target to traverse for tags and deps",
+            aspects = [tags_propagator, deps_propagator],
             mandatory = True,
         ),
     },
@@ -206,6 +260,12 @@ def jvm_import_test_suite(name):
     jvm_import_uses_execution_platform_java_runtime_test(
         name = "jvm_import_uses_execution_platform_java_runtime_test",
         target_under_test = "@jvm_import_test//:com_google_code_findbugs_jsr305_3_0_2",
+    )
+
+    does_jvm_import_exclude_exclusions_in_deps_test(
+        name = "does_jvm_import_exclude_exclusions_in_deps_test",
+        target_under_test = "@pom_exclusion_testing_coursier//:com_google_guava_guava",
+        src = "@pom_exclusion_testing_coursier//:com_google_guava_guava",
     )
 
     # TODO: restore once https://github.com/bazelbuild/rules_license/issues/154 is resolved

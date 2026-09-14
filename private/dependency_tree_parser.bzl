@@ -211,6 +211,13 @@ copy_file(
            get_classifier(dep) in PLATFORM_CLASSIFIER:
             continue
 
+        # If the artifact is in exclusions, exclude it from deps here. It will be listed
+        # in maven_exclusion as well.
+        if simple_coord in exclusions and \
+           stripped_dep in exclusions[simple_coord]:
+            print("skipping %s in %s".format(stripped_dep, simple_coord))
+            continue
+
         # Coursier returns cyclic dependencies sometimes. Handle it here.
         # See https://github.com/bazelbuild/rules_jvm_external/issues/172
         if dep_target_label != target_label:
