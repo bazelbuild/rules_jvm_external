@@ -26,6 +26,7 @@ java_library(
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/events",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/gradle/models",
         "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/netrc",
+        "//private/tools/java/com/github/bazelbuild/rules_jvm_external/resolver/remote/gcs:gcs_download_service",
         artifact(
             "org.gradle:gradle-tooling-api",
             repository_name = "rules_jvm_external_deps",

@@ -35,6 +35,7 @@ import com.github.bazelbuild.rules_jvm_external.resolver.gradle.models.GradleRes
 import com.github.bazelbuild.rules_jvm_external.resolver.gradle.models.GradleResolvedDependency;
 import com.github.bazelbuild.rules_jvm_external.resolver.gradle.models.GradleUnresolvedDependency;
 import com.github.bazelbuild.rules_jvm_external.resolver.netrc.Netrc;
+import com.github.bazelbuild.rules_jvm_external.resolver.remote.gcs.GcpTokenProvider;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import com.google.common.hash.Hashing;
@@ -146,9 +147,13 @@ public class GradleResolver implements Resolver {
       List<Repository> repositories, Path projectDir) throws MalformedURLException {
     Map<String, String> properties = new HashMap<>();
     for (Repository repository : repositories) {
-      if (repository.requiresAuth) {
-        properties.put(repository.usernameProperty, repository.getUsername());
-        properties.put(repository.passwordProperty, repository.getPassword());
+      switch (repository.authMethod) {
+        case BASIC -> {
+          properties.put(repository.usernameProperty, repository.getUsername());
+          properties.put(repository.passwordProperty, repository.getPassword());
+        }
+        case BEARER -> properties.put(repository.passwordProperty, repository.getPassword());
+        case NONE -> {}
       }
     }
 
@@ -675,12 +680,18 @@ public class GradleResolver implements Resolver {
   }
 
   private Repository createRepository(URI uri) {
+    if ("gcs".equals(uri.getScheme())) {
+      uri = URI.create(uri.toString().replace("gcs://", "https://storage.googleapis.com/"));
+      String token = new GcpTokenProvider().getAccessToken();
+      return new Repository(uri, AuthMethod.BEARER, "_", token);
+    }
+
     Netrc.Credential credential = netrc.getCredential(uri.getHost());
     if (credential == null) {
       return new Repository(uri);
     }
 
-    return new Repository(uri, true, credential.login(), credential.password());
+    return new Repository(uri, AuthMethod.BASIC, credential.login(), credential.password());
   }
 
   private GradleDependencyImpl createDependency(Artifact artifact) {

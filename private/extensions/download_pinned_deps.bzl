@@ -41,7 +41,12 @@ def download_pinned_deps(mctx, artifacts, http_files, has_m2local):
         http_file(
             name = http_file_repository_name,
             sha256 = artifact["sha256"],
-            urls = urls,
+            urls = [
+                u.replace("gcs://", "https://storage.googleapis.com/")
+                if u.startswith("gcs://")
+                else u
+                for u in urls
+            ],
             # https://github.com/bazelbuild/rules_jvm_external/issues/1028
             downloaded_file_path = "v1/%s" % artifact["file"] if artifact["file"] else artifact["file"],
         )

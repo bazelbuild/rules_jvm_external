@@ -8,7 +8,17 @@ repositories {
     maven {
         url "{{url}}"
         allowInsecureProtocol = {{allowInsecureProtocol}}
-{{~#if requiresAuth}}
+{{~#if auth.bearer}}
+        authentication {
+            header(HttpHeaderAuthentication)
+        }
+        credentials(HttpHeaderCredentials) {
+            def token = findProperty("{{passwordProperty}}")
+            if (token == null) throw new GradleException("Missing {{passwordProperty}}")
+            name = "Authorization"
+            value = "Bearer " + token
+        }
+{{~else if auth.basic}}
         credentials {
             def u = findProperty("{{usernameProperty}}")
             if (u == null) throw new GradleException("Missing {{usernameProperty}}")

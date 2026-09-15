@@ -55,6 +55,7 @@ public class HttpDownloaderTransporterFactory implements TransporterFactory {
     String scheme = repository.getProtocol();
     if ("http".equalsIgnoreCase(scheme)
         || "https".equalsIgnoreCase(scheme)
+        || "gcs".equalsIgnoreCase(scheme)
         || "file".equalsIgnoreCase(scheme)) {
       return new HttpDownloaderTransporter(downloadService, repository);
     }

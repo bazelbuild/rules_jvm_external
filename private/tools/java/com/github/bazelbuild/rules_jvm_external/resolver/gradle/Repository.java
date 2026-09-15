@@ -20,19 +20,19 @@ import java.util.Objects;
 /** Models a maven repository that is added to a gradle build script */
 public class Repository {
   public final URI uri;
-  public final boolean requiresAuth;
+  public final AuthMethod authMethod;
   public final String usernameProperty;
   public final String passwordProperty;
   private final String password;
   private final String username;
 
   public Repository(URI uri) {
-    this(uri, false, null, null);
+    this(uri, AuthMethod.NONE, null, null);
   }
 
-  public Repository(URI uri, boolean requiresAuth, String username, String password) {
+  public Repository(URI uri, AuthMethod authMethod, String username, String password) {
     this.uri = Objects.requireNonNull(uri);
-    this.requiresAuth = requiresAuth;
+    this.authMethod = authMethod;
     String host = URI.create(getUrl()).getHost();
     this.username = username;
     this.password = password;

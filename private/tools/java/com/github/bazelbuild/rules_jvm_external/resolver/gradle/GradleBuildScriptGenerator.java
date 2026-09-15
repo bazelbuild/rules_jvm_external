@@ -116,10 +116,17 @@ public class GradleBuildScriptGenerator {
                   } else {
                     map.put("allowInsecureProtocol", false);
                   }
-                  map.put("requiresAuth", repo.requiresAuth);
-                  if (repo.requiresAuth) {
-                    map.put("usernameProperty", repo.usernameProperty);
-                    map.put("passwordProperty", repo.passwordProperty);
+                  switch (repo.authMethod) {
+                    case BEARER -> {
+                      map.put("auth", Map.of("bearer", true, "basic", false));
+                      map.put("passwordProperty", repo.passwordProperty);
+                    }
+                    case BASIC -> {
+                      map.put("auth", Map.of("bearer", false, "basic", true));
+                      map.put("usernameProperty", repo.usernameProperty);
+                      map.put("passwordProperty", repo.passwordProperty);
+                    }
+                    case NONE -> map.put("auth", Map.of("bearer", false, "basic", false));
                   }
                   return map;
                 })
