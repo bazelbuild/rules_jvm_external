@@ -2,6 +2,7 @@ load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//private/lib:urls.bzl", "extract_netrc_from_auth_url", "remove_auth_from_url", "split_url")
 load(
     "//private/rules:coursier.bzl",
+    "check_artifacts_are_unique",
     "compute_dependency_inputs_signature",
     "get_coursier_cache_or_default",
     "get_coursier_environment",
@@ -19,6 +20,35 @@ def add_test(test_impl_func):
     test = unittest.make(test_impl_func)
     ALL_TESTS.append(test)
     return test
+
+def _packaging_does_not_distinguish_duplicate_versions_test_impl(ctx):
+    env = unittest.begin(ctx)
+    artifacts = [
+        {
+            "group": "com.example",
+            "artifact": "library",
+            "version": "1.0",
+            "packaging": "jar",
+            "classifier": None,
+        },
+        {
+            "group": "com.example",
+            "artifact": "library",
+            "version": "2.0",
+            "packaging": "aar",
+            "classifier": None,
+        },
+    ]
+
+    asserts.equals(
+        env,
+        "Found duplicate artifact versions\n    com.example:library has multiple versions 1.0, 2.0\nPlease remove duplicate artifacts from the artifact list so you do not get unexpected artifact versions",
+        check_artifacts_are_unique(artifacts, "warn"),
+    )
+
+    return unittest.end(env)
+
+packaging_does_not_distinguish_duplicate_versions_test = add_test(_packaging_does_not_distinguish_duplicate_versions_test_impl)
 
 def _infer_doc_example_test_impl(ctx):
     env = unittest.begin(ctx)

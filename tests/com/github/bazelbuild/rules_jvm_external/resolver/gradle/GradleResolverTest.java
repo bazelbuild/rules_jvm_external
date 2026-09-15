@@ -66,6 +66,19 @@ public class GradleResolverTest extends ResolverTestBase {
   }
 
   @Test
+  public void duplicateDirectDependenciesUseHighestVersion() {
+    Coordinates lower = new Coordinates("com.example:library:1.0");
+    Coordinates higher = new Coordinates("com.example:library:2.0");
+    Path repo = MavenRepo.create().add(lower).add(higher).getPath();
+
+    Graph<Coordinates> resolved =
+        resolver.resolve(prepareRequestFor(repo.toUri(), lower, higher)).getResolution();
+
+    assertFalse(resolved.nodes().contains(lower));
+    assertTrue(resolved.nodes().contains(higher));
+  }
+
+  @Test
   public void resolvesSimpleJvmVariant() throws IOException, XMLStreamException {
     // This test validates gradle can resolve a artifact using only gradle module metadata
     // In this case, there's a root artifact com.example.sample which points to

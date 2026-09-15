@@ -578,10 +578,10 @@ def _pinned_coursier_fetch_impl(repository_ctx):
     repositories = [json.decode(repository) for repository in repository_ctx.attr.repositories]
 
     artifacts = [json.decode(artifact) for artifact in repository_ctx.attr.artifacts]
-    _check_artifacts_are_unique(artifacts, repository_ctx.attr.duplicate_version_warning)
+    check_artifacts_are_unique(artifacts, repository_ctx.attr.duplicate_version_warning)
 
     boms = [json.decode(bom) for bom in repository_ctx.attr.boms]
-    _check_artifacts_are_unique(boms, repository_ctx.attr.duplicate_version_warning)
+    check_artifacts_are_unique(boms, repository_ctx.attr.duplicate_version_warning)
 
     # Read Coursier state from maven_install.json.
     repository_ctx.symlink(
@@ -937,7 +937,7 @@ def infer_artifact_path_from_primary_and_repos(primary_url, repository_urls):
             break
     return primary_artifact_path
 
-def _check_artifacts_are_unique(artifacts, duplicate_version_warning):
+def check_artifacts_are_unique(artifacts, duplicate_version_warning):
     if duplicate_version_warning == "none":
         return
     seen_artifacts = {}
@@ -962,7 +962,9 @@ def _check_artifacts_are_unique(artifacts, duplicate_version_warning):
         if duplicate_version_warning == "error":
             fail("\n".join(msg_parts))
         else:
-            print("\n".join(msg_parts))
+            message = "\n".join(msg_parts)
+            print(message)
+            return message
 
 def get_coursier_sha256(environ, default_sha256):
     return environ.get("COURSIER_SHA256", default_sha256)
@@ -1284,10 +1286,10 @@ def _coursier_fetch_impl(repository_ctx):
     for artifact in repository_ctx.attr.artifacts:
         artifacts.append(json.decode(artifact))
 
-    _check_artifacts_are_unique(artifacts, repository_ctx.attr.duplicate_version_warning)
+    check_artifacts_are_unique(artifacts, repository_ctx.attr.duplicate_version_warning)
 
     boms = [json.decode(bom) for bom in repository_ctx.attr.boms]
-    _check_artifacts_are_unique(boms, repository_ctx.attr.duplicate_version_warning)
+    check_artifacts_are_unique(boms, repository_ctx.attr.duplicate_version_warning)
 
     excluded_artifacts = []
     for artifact in repository_ctx.attr.excluded_artifacts:

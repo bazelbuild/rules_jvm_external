@@ -204,6 +204,18 @@ dev_maven.amend_artifact(
     neverlink = "on",
 )
 dev_maven.install(
+    name = "duplicate_version_error",
+    artifacts = [
+        "com.fasterxml.jackson.core:jackson-annotations:2.10.1",
+        "com.fasterxml.jackson.core:jackson-annotations:2.12.1",
+    ],
+    duplicate_version_warning = "error",
+    repositories = [
+        "https://repo1.maven.org/maven2",
+        "https://maven.google.com",
+    ],
+)
+dev_maven.install(
     name = "duplicate_version_warning",
     artifacts = [
         "com.fasterxml.jackson.core:jackson-annotations:2.10.1",
@@ -1054,6 +1066,23 @@ local_path_override(
 )
 
 dev_maven.install(
+    name = "coursier_layering",
+    artifacts = [
+        "com.google.code.findbugs:jsr305:3.0.1",
+    ],
+    known_contributing_modules = [
+        "coursier_higher_layer",
+    ],
+    resolver = "coursier",
+)
+
+bazel_dep(name = "coursier_higher_layer", version = "0.0.0", dev_dependency = True)
+local_path_override(
+    module_name = "coursier_higher_layer",
+    path = "tests/integration/coursier_higher_layer",
+)
+
+dev_maven.install(
     name = "root_module_can_override",
     artifacts = ["com.squareup:javapoet:1.11.1"],
     known_contributing_modules = [
@@ -1087,6 +1116,8 @@ use_repo(
     dev_maven,
     "amend_artifacts",
     "bom_only_pinning",
+    "coursier_layering",
+    "duplicate_version_error",
     "duplicate_version_warning",
     "duplicate_version_warning_same_version",
     "exclusion_testing",

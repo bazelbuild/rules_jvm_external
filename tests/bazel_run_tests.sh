@@ -32,6 +32,17 @@ function test_duplicate_version_warning() {
   expect_log "Successfully pinned resolved artifacts"
 }
 
+function test_duplicate_version_error() {
+  if bazel run @duplicate_version_error//:pin >> "$TEST_LOG" 2>&1; then
+    printf "Expected duplicate artifact versions to fail the build\n" >> "$TEST_LOG"
+    return 1
+  fi
+
+  expect_log "Found duplicate artifact versions"
+  expect_log "com.fasterxml.jackson.core:jackson-annotations has multiple versions"
+  expect_not_log "Successfully pinned resolved artifacts"
+}
+
 function test_duplicate_version_warning_same_version() {
   bazel run @duplicate_version_warning_same_version//:pin >> "$TEST_LOG" 2>&1
   rm -f *duplicate_version_warning_same_version_install.json
@@ -450,6 +461,7 @@ TESTS=(
   "test_coursier_resolution_with_boms"
   "test_maven_resolution"
   "test_dependency_aggregation"
+  "test_duplicate_version_error"
   "test_duplicate_version_warning"
   "test_duplicate_version_warning_same_version"
   "test_outdated"

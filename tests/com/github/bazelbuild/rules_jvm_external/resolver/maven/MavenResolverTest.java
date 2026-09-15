@@ -14,6 +14,8 @@
 
 package com.github.bazelbuild.rules_jvm_external.resolver.maven;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.github.bazelbuild.rules_jvm_external.Coordinates;
@@ -32,6 +34,18 @@ public class MavenResolverTest extends ResolverTestBase {
   @Override
   protected Resolver getResolver(Netrc netrc, EventListener listener) {
     return new MavenResolver(netrc, ResolverConfig.DEFAULT_MAX_THREADS, listener);
+  }
+
+  @Test
+  public void duplicateDirectDependenciesUseFirstVersion() {
+    Coordinates first = new Coordinates("com.example:library:1.0");
+    Coordinates second = new Coordinates("com.example:library:2.0");
+    Path repo = MavenRepo.create().add(first).add(second).getPath();
+
+    var resolved = resolver.resolve(prepareRequestFor(repo.toUri(), first, second)).getResolution();
+
+    assertTrue(resolved.nodes().contains(first));
+    assertFalse(resolved.nodes().contains(second));
   }
 
   @Test

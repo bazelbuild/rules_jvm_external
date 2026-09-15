@@ -1,0 +1,16 @@
+module(name = "coursier_higher_layer")
+
+bazel_dep(name = "rules_jvm_external", version = "0.0")
+local_path_override(
+    module_name = "rules_jvm_external",
+    path = "../../../",
+)
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "coursier_layering",
+    artifacts = [
+        "com.google.code.findbugs:jsr305:3.0.2",
+    ],
+)
+use_repo(maven, "coursier_layering")

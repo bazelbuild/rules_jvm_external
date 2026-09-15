@@ -2,8 +2,8 @@
 
 load("@bazel_skylib//lib:partial.bzl", "partial")
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//private/extensions:maven.bzl", "apply_root_version_conflict_policy")
 load("//private/lib:coordinates.bzl", "unpack_coordinates")
+load("//private/lib:layering.bzl", "apply_root_version_conflict_policy")
 
 def _pinned_policy_forces_versioned_root_artifacts_impl(ctx):
     env = unittest.begin(ctx)

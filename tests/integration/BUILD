@@ -154,6 +154,31 @@ diff_test(
     tags = [] if is_bzlmod_enabled() else ["manual"],
 )
 
+genquery(
+    name = "coursier-layering-deps",
+    expression = "deps(@coursier_layering//:com_google_code_findbugs_jsr305)",
+    opts = [
+        "--nohost_deps",
+        "--noimplicit_deps",
+    ],
+    scope = ["@coursier_layering//:com_google_code_findbugs_jsr305"],
+)
+
+genrule(
+    name = "coursier-layering-deps-sorted",
+    testonly = 1,
+    srcs = [":coursier-layering-deps"],
+    outs = ["coursier-layering-deps-sorted.txt"],
+    cmd = "cat $< | grep coursier_layering | sed -e 's|^@@|@|g; s|\\r||g' | sed -e 's|^@[^/]*[+~]|@|g; s|\\r||g' | sort > $@",
+)
+
+diff_test(
+    name = "coursier-layering-deps-test",
+    file1 = "coursier-layering-deps.golden.unix",
+    file2 = ":coursier-layering-deps-sorted.txt",
+    tags = [] if is_bzlmod_enabled() else ["manual"],
+)
+
 # This target will fail to build if we're not handling merging of maven.install
 # tags properly, and if we don't handle multiple lock files properly.
 java_library(
